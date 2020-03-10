@@ -6,20 +6,6 @@ const Schema = require('./Schema')
 const ProjectFileStructure = require('./ProjectFileStructure')
 const CodeBuilder = require('./CodeBuilder')
 module.exports = function (config) {
-  // if(!fs.existsSync('./otter-cache.json')) fs.writeFileSync('./otter-cache.json', '{}')
-  // const cache = JSON.parse(fs.readFileSync('./otter-cache.json'))
-
-  // const hash = crypto.createHash('sha256').update(JSON.stringify(config)).digest('base64')
-  // console.log(hash)
-  // if(cache['hash'] === hash)
-  // {
-  //    return
-  // }
-
-  // cache.hash = hash
-
-  // fs.writeFileSync('./otter-cache.json', JSON.stringify(cache))
-
   const TypeToType = {
     number: 'Number',
     integer: 'Number',

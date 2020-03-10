@@ -2,14 +2,13 @@
   "name": "ottermator",
   "version": "0.0.1",
   "description": "Microservice Code Generator",
-  "main": "Otter.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "code",
     "generator",
-    "otter",
     "microservice"
   ],
   "author": "TotalTechGeek",

@@ -1,10 +1,11 @@
 const fs = require('fs-extra')
 const { Router } = require('express')
 
-const OtterHandler = require('./OtterHandler')
+const OtterHandler = require('./Handler')
 const Schema = require('./Schema')
 const Events = require('./Events')
 const process = require('process')
+const packageName = require('./name')
 
 const { JSONPath } = require('jsonpath-plus')
 const Ajv = require('ajv')
@@ -16,7 +17,7 @@ function $ (func) {
     try {
       await func(req, res, next)
     } catch (err) {
-      Events.emit('RouteError', { req, res, err, ...req.otter })
+      Events.emit('RouteError', { req, res, err, ...req[packageName] })
       if (err.response) {
         let response = err.response
         if (typeof err.response === 'function') {
@@ -156,13 +157,13 @@ class OtterRouter {
     }
 
     this.router[(route.method || 'GET').toLowerCase()](route.route || '/', $(async (req, res, next) => {
-      req.otter = req.otter || {}
-      req.otter.data = {}
-      req.otter.action = route.name
-      req.otter.route = route.route
-      req.otter.start = process.hrtime()
+      req[packageName] = req[packageName] || {}
+      req[packageName].data = {}
+      req[packageName].action = route.name
+      req[packageName].route = route.route
+      req[packageName].start = process.hrtime()
 
-      Events.emit('EndpointCalled', { req, res, action: req.otter.action, route: req.otter.route })
+      Events.emit('EndpointCalled', { req, res, action: req[packageName].action, route: req[packageName].route })
 
       Object.keys(looseNumberHandler).forEach(reqPart => {
         looseNumberHandler[reqPart].forEach(prop => {
@@ -171,7 +172,7 @@ class OtterRouter {
       })
 
       if (route.extract) {
-        req.otter.data = OtterExtraction.extract(route.extract, req, res)
+        req[packageName].data = OtterExtraction.extract(route.extract, req, res)
       }
 
       Object.keys(validations).forEach(v => {
@@ -179,19 +180,19 @@ class OtterRouter {
         if (!verified) throw new EndpointNotValidatedError(route.route, route.name, validations[v].errors, v)
       })
 
-      Events.emit('EndpointReady', { req, res, data: req.otter.data, action: req.otter.action, route: req.otter.route })
+      Events.emit('EndpointReady', { req, res, data: req[packageName].data, action: req[packageName].action, route: req[packageName].route })
 
       if (this.extractions[route.name]) {
-        req.otter.data = await this.extractions[route.name](req, res, req.otter.data)
-        if (typeof req.otter.data === 'undefined') throw new ExtractionUndefinedError(route.route, route.name)
+        req[packageName].data = await this.extractions[route.name](req, res, req[packageName].data)
+        if (typeof req[packageName].data === 'undefined') throw new ExtractionUndefinedError(route.route, route.name)
       }
 
       if (this.authorizations[route.name]) {
-        const allowed = await this.authorizations[route.name](req, res, req.otter.data)
+        const allowed = await this.authorizations[route.name](req, res, req[packageName].data)
         if (!allowed) throw new UnauthorizedError(route.route, route.name)
       }
 
-      const result = await this.actions[route.name](req.otter.data || {})
+      const result = await this.actions[route.name](req[packageName].data || {})
 
       if (this.after[route.name]) {
         const afterResult = await this.after[route.name](req, res, result)
@@ -199,7 +200,7 @@ class OtterRouter {
         return
       }
 
-      Events.emit('EndpointExecuted', { req, res, data: req.otter.data, action: req.otter.action, route: req.otter.route, result, executionTime: process.hrtime(req.otter.start) })
+      Events.emit('EndpointExecuted', { req, res, data: req[packageName].data, action: req[packageName].action, route: req[packageName].route, result, executionTime: process.hrtime(req[packageName].start) })
 
       res.json(result)
     }))

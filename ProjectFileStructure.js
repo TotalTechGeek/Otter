@@ -148,6 +148,15 @@ class ProjectFileStructure {
     }
     this.createDomains()
     this.createExternals()
+    this.createPlugins()
+  }
+
+  createPlugins () {
+    this.createFolder('plugins')
+  }
+
+  createPlugin (name) {
+    this.createFile(`plugins/${name}.js`, this.fixCode(`// eslint-disable-next-line no-unused-vars\nconst externals = require('../../externals/externals');\nconst ${variableName} = require('${packageName}');\nmodule.exports = {};\n${variableName}.Handler.wrapLoad('${DOMAINS}/${name}/actionValidations', module.exports)`))
   }
 
   saveDomainActionTree (domain, tree) {

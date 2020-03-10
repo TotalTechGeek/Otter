@@ -88,11 +88,10 @@ module.exports = function (config) {
         })
       })
 
-      tree = CodeBuilder.updateExports(tree, actions)
-
-      authorizationTree = CodeBuilder.updateExports(authorizationTree, authorizations)
-      extractionTree = CodeBuilder.updateExports(extractionTree, extractions)
-      afterTree = CodeBuilder.updateExports(afterTree, after)
+      if (!CodeBuilder.checkIfExportIsPlugin(tree)) { tree = CodeBuilder.updateExports(tree, actions) }
+      if (!CodeBuilder.checkIfExportIsPlugin(authorizationTree)) { authorizationTree = CodeBuilder.updateExports(authorizationTree, authorizations) }
+      if (!CodeBuilder.checkIfExportIsPlugin(extractionTree)) { extractionTree = CodeBuilder.updateExports(extractionTree, extractions) }
+      if (!CodeBuilder.checkIfExportIsPlugin(afterTree)) { afterTree = CodeBuilder.updateExports(afterTree, after) }
 
       ProjectFileStructure.saveDomainTree(domain, 'authorizations.js', authorizationTree)
       ProjectFileStructure.saveDomainTree(domain, 'extractions.js', extractionTree)
@@ -158,4 +157,8 @@ module.exports = function (config) {
 
   ProjectFileStructure.saveActualExternalsExport(Object.keys(config.externals || {}))
   ProjectFileStructure.saveMockExternalsExport(Object.keys(config.externals || {}))
+
+  ;(config.plugins || []).forEach(plugin => {
+    ProjectFileStructure.createPlugin(plugin)
+  })
 }

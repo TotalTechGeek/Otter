@@ -281,6 +281,10 @@ function generateStubFunction (name, {
   }
 }
 
+function checkIfExportIsPlugin (tree) {
+  return ((crawler.fetch(tree, '$..[?(@.type === \'AssignmentExpression\')].left.object[?(@ === \'module\')]^^^..right') || [])[0] || { type: 'ObjectExpression' }).type !== 'ObjectExpression'
+}
+
 function updateExports (tree, funcs) {
   let modified = false
 
@@ -316,6 +320,7 @@ function updateExports (tree, funcs) {
 
 module.exports = {
   updateExports,
+  checkIfExportIsPlugin,
   generateArrowFunction,
   generateComment,
   generateStubFunction,

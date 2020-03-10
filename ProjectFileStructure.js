@@ -164,19 +164,19 @@ class ProjectFileStructure {
 // eslint-disable-next-line no-unused-vars
 const externals = require('../../externals/externals');
 module.exports = {};
-O${variableName}ErrorHandler.wrap(module.exports);
+${variableName}.ErrorHandler.wrap(module.exports);
 `)
     this.createFile(`${DOMAINS}/${name}/after.js`, `const ${variableName} = require('${packageName}');
 // eslint-disable-next-line no-unused-vars
 const externals = require('../../externals/externals');
 module.exports = {};
-O${variableName}ErrorHandler.wrap(module.exports);
+${variableName}.ErrorHandler.wrap(module.exports);
 `)
     this.createFile(`${DOMAINS}/${name}/authorizations.js`, `const ${variableName} = require('${packageName}');
 // eslint-disable-next-line no-unused-vars
 const externals = require('../../externals/externals');
 module.exports = {};
-O${variableName}ErrorHandler.wrap(module.exports);
+${variableName}.ErrorHandler.wrap(module.exports);
 `)
   }
 

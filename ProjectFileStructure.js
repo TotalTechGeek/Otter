@@ -4,6 +4,7 @@ const escodegen = require('escodegen')
 const DOMAINS = './domains'
 const EXTERNALS = './externals'
 const standard = require('standard')
+const packageName = require('./name')
 class ProjectFileStructure {
   createFolder (folder) {
     if (!fs.existsSync(folder)) { fs.mkdirSync(folder) }
@@ -53,7 +54,7 @@ class ProjectFileStructure {
   }
 
   saveRoutesExport (domains) {
-    const code = `const Otter = require('otter')
+    const code = `const Otter = require('${packageName}')
         const path = require('path')
         const router = new Otter.Routes.OtterRouter()
         router.composeFrom([${domains.map(i => `path.resolve('./domains/${i}')`).join(', ')}])
@@ -62,7 +63,7 @@ class ProjectFileStructure {
   }
 
   saveDomainRoutesExport (domain) {
-    const code = `const Otter = require('otter')
+    const code = `const Otter = require('${packageName}')
         const router = new Otter.Routes.OtterRouter()
 
         router.injectLoad('${DOMAINS}/${domain}/endpoints.json')
@@ -157,10 +158,25 @@ class ProjectFileStructure {
     this.createFolder(`${DOMAINS}/${name}`)
     this.createFile(`${DOMAINS}/${name}/steps.js`, '// used for implementing Cucumber')
 
-    this.createFile(`${DOMAINS}/${name}/actions.js`, `// eslint-disable-next-line no-unused-vars\nconst externals = require('../../externals/externals');\nconst Otter = require('otter');\nmodule.exports = {};\nOtter.Handler.wrapLoad('${DOMAINS}/${name}/actionValidations', module.exports)`)
-    this.createFile(`${DOMAINS}/${name}/extractions.js`, 'const Otter = require(\'otter\');\n// eslint-disable-next-line no-unused-vars\nconst externals = require(\'../../externals/externals\');\nmodule.exports = {};\nOtter.ErrorHandler.wrap(module.exports);\n')
-    this.createFile(`${DOMAINS}/${name}/after.js`, 'const Otter = require(\'otter\');\n// eslint-disable-next-line no-unused-vars\nconst externals = require(\'../../externals/externals\');\nmodule.exports = {};\nOtter.ErrorHandler.wrap(module.exports);\n')
-    this.createFile(`${DOMAINS}/${name}/authorizations.js`, 'const Otter = require(\'otter\');\n// eslint-disable-next-line no-unused-vars\nconst externals = require(\'../../externals/externals\');\nmodule.exports = {};\nOtter.ErrorHandler.wrap(module.exports);\n')
+    this.createFile(`${DOMAINS}/${name}/actions.js`, `// eslint-disable-next-line no-unused-vars\nconst externals = require('../../externals/externals');\nconst Otter = require('${packageName}');\nmodule.exports = {};\nOtter.Handler.wrapLoad('${DOMAINS}/${name}/actionValidations', module.exports)`)
+    this.createFile(`${DOMAINS}/${name}/extractions.js`, `const Otter = require('${packageName}');
+// eslint-disable-next-line no-unused-vars
+const externals = require('../../externals/externals');
+module.exports = {};
+Otter.ErrorHandler.wrap(module.exports);
+`)
+    this.createFile(`${DOMAINS}/${name}/after.js`, `const Otter = require('${packageName}');
+// eslint-disable-next-line no-unused-vars
+const externals = require('../../externals/externals');
+module.exports = {};
+Otter.ErrorHandler.wrap(module.exports);
+`)
+    this.createFile(`${DOMAINS}/${name}/authorizations.js`, `const Otter = require('${packageName}');
+// eslint-disable-next-line no-unused-vars
+const externals = require('../../externals/externals');
+module.exports = {};
+Otter.ErrorHandler.wrap(module.exports);
+`)
   }
 
   writeDomainConfig (domain, name, data) {
@@ -183,8 +199,8 @@ class ProjectFileStructure {
 
   createExternal (name) {
     this.createExternals()
-    this.createFile(`${EXTERNALS}/mock/${name}.js`, `const Otter = require('otter');\nmodule.exports = {};\nOtter.Handler.wrapLoad('${EXTERNALS}/mock/${name}Validations', module.exports);`)
-    this.createFile(`${EXTERNALS}/actual/${name}.js`, `const Otter = require('otter');\nmodule.exports = {};\nOtter.Handler.wrapLoad('${EXTERNALS}/actual/${name}Validations', module.exports);`)
+    this.createFile(`${EXTERNALS}/mock/${name}.js`, `const Otter = require('${packageName}');\nmodule.exports = {};\nOtter.Handler.wrapLoad('${EXTERNALS}/mock/${name}Validations', module.exports);`)
+    this.createFile(`${EXTERNALS}/actual/${name}.js`, `const Otter = require('${packageName}');\nmodule.exports = {};\nOtter.Handler.wrapLoad('${EXTERNALS}/actual/${name}Validations', module.exports);`)
   }
 }
 

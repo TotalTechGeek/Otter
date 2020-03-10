@@ -1,20 +1,20 @@
-const { Handler, ValidationError } = require('./ValidationHandler')
+const { Handler: ValidationHandler, ValidationError } = require('./ValidationHandler')
 const ErrorHandler = require('./ErrorHandler')
 const fs = require('fs-extra')
-class OtterHandler {
+class Handler {
   /**
      *
      * @param {Object} configuration
      * @param {Object} obj
      */
   wrap (configuration, obj) {
-    Handler.wrap(configuration, obj)
+    ValidationHandler.wrap(configuration, obj)
     ErrorHandler.wrap(obj)
     return obj
   }
 
   wrapUnenumerable (configuration, obj) {
-    Handler.wrapUnenumerable(configuration, obj)
+    ValidationHandler.wrapUnenumerable(configuration, obj)
     ErrorHandler.wrapUnenumerable(obj)
     return obj
   }
@@ -25,5 +25,5 @@ class OtterHandler {
   }
 }
 
-module.exports = new OtterHandler()
+module.exports = new Handler()
 module.exports.ValidationError = ValidationError

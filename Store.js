@@ -1,11 +1,13 @@
 // This is not meant to be anything fancy.
 
-const Crawler = require('./Crawler')
-const jp = require('jsonpath')
-const store = {}
-const { cloneDeep } = require('lodash')
+const jsonpath = require('jsonpath')
+const cloneDeep = require('lodash/cloneDeep')
 const fs = require('fs-extra')
 const Notation = require('notation')
+
+const Crawler = require('./Crawler')
+
+const store = {}
 
 function fixPath (queries) {
   if (typeof queries === 'string') {
@@ -80,9 +82,9 @@ class Store {
      */
   set (path, modifier) {
     path = allowUp(fixPath(path))
-    const pathArray = jp.parse(path)
+    const pathArray = jsonpath.parse(path)
     const property = pathArray.pop().expression.value
-    const strippedPath = allowUp2(jp.stringify(pathArray))
+    const strippedPath = allowUp2(jsonpath.stringify(pathArray))
     store[this.name] = Crawler.modifyProperty(store[this.name], strippedPath, property, modifier)
     this.save()
   }
@@ -132,9 +134,9 @@ class Store {
      */
   delete (path) {
     path = allowUp(fixPath(path))
-    const pathArray = jp.parse(path)
+    const pathArray = jsonpath.parse(path)
     const property = pathArray.pop().expression.value
-    const strippedPath = allowUp2(jp.stringify(pathArray))
+    const strippedPath = allowUp2(jsonpath.stringify(pathArray))
     this.modify(strippedPath, data => {
       delete data[property]
       return data

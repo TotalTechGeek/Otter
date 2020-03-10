@@ -1,30 +1,22 @@
-const ValidationHandler = require('./ValidationHandler')
+const Validations = require('./ValidationHandler')
 const ErrorHandler = require('./ErrorHandler')
-const OtterHandler = require('./OtterHandler')
-const OtterExtraction = require('./OtterExtraction')
-const OtterRouting = require('./RouteBuilder')
+const Handler = require('./OtterHandler')
+const Extract = require('./OtterExtraction')
+const Routes = require('./RouteBuilder')
 const Schema = require('./Schema')
 const Crawler = require('./Crawler')
-const ProjectBuilder = require('./ProjectBuilder')
+const Builder = require('./ProjectBuilder')
 const Store = require('./Store')
 const Events = require('./Events')
 module.exports = {
-  Routes: {
-    $: OtterRouting.$,
-    EndpointNotValidatedError: OtterRouting.EndpointNotValidatedError,
-    ExtractionUndefinedError: OtterRouting.ExtractionUndefinedError,
-    OtterRouter: OtterRouting.OtterRouter
-  },
+  Routes,
   Store,
-  Schema: Schema,
-  Handler: OtterHandler,
-  Validations: {
-    Handler: ValidationHandler.Handler,
-    ValidationError: ValidationHandler.ValidationError
-  },
-  ErrorHandler: ErrorHandler,
-  Extract: OtterExtraction,
-  Crawler: Crawler,
-  Builder: ProjectBuilder,
+  Schema,
+  Handler,
+  Validations,
+  ErrorHandler,
+  Extract,
+  Crawler,
+  Builder,
   Events
 }

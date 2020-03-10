@@ -1,11 +1,11 @@
 const fs = require('fs-extra')
-const { Router } = require('express')
+const { Router: ExpressRouter } = require('express')
 
-const OtterHandler = require('./Handler')
+const Handler = require('./Handler')
 const Schema = require('./Schema')
 const Events = require('./Events')
 const process = require('process')
-const packageName = require('./name')
+const { packageName } = require('./name')
 
 const { JSONPath } = require('jsonpath-plus')
 const Ajv = require('ajv')
@@ -32,7 +32,7 @@ function $ (func) {
   }
 }
 
-class OtterExtraction {
+class Extraction {
   static extract (extractions, req, res) {
     const data = {}
 
@@ -87,9 +87,9 @@ class UnauthorizedError extends Error {
   }
 }
 
-class OtterRouter {
+class Router {
   constructor (actions) {
-    this.router = Router()
+    this.router = ExpressRouter()
     this.actions = actions
     this.extractions = {}
     this.authorizations = {}
@@ -172,7 +172,7 @@ class OtterRouter {
       })
 
       if (route.extract) {
-        req[packageName].data = OtterExtraction.extract(route.extract, req, res)
+        req[packageName].data = Extraction.extract(route.extract, req, res)
       }
 
       Object.keys(validations).forEach(v => {
@@ -212,7 +212,7 @@ class OtterRouter {
   }
 }
 
-OtterHandler.wrapUnenumerable({
+Handler.wrapUnenumerable({
   injectLoad: Schema.array([Schema.string()]),
   inject: Schema.object({
     method: Schema.string().pattern('GET|POST|PUT|PATCH|DELETE').optional(),
@@ -220,6 +220,6 @@ OtterHandler.wrapUnenumerable({
     route: Schema.string(),
     name: Schema.string().required()
   }).allowAdditional(true)
-}, OtterRouter.prototype)
+}, ExpressRouter.prototype)
 
-module.exports = { OtterRouter, $, EndpointNotValidatedError, ExtractionUndefinedError }
+module.exports = { Router, $, EndpointNotValidatedError, ExtractionUndefinedError }

@@ -1,1 +1,1 @@
-module.exports = 'ottermator'
+module.exports = { packageName: 'ottermator', name: 'Otter' }

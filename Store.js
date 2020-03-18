@@ -25,12 +25,29 @@ function allowUp2 (x) {
   return x.replace(/\["\^"\]/g, '^')
 }
 
+// used to allow easy JSON persisting and linking sequences to the store.
+const sequenceLink = {}
+
+class Sequence {
+  constructor (count, store) {
+    this.count = count || 0
+    sequenceLink[this] = store
+  }
+
+  next () {
+    const count = ++this.count
+    if (sequenceLink[this]) sequenceLink[this].save()
+    return count
+  }
+}
+
 class Store {
   constructor (name, options) {
     if (!options) options = {}
+
     this.name = name
     this.options = options
-    if (!store[this.name]) store[this.name] = {}
+    if (!store[this.name]) store[this.name] = { $meta: { sequences: {} } }
     this.load()
   }
 
@@ -54,6 +71,71 @@ class Store {
 
   ingest (data) {
     store[this.name] = cloneDeep(data)
+  }
+
+  /**
+   * Creates a counter that is used to track ID incrementing ;)
+   * @param {String} name
+   * @returns {Sequence}
+   */
+  sequence (name) {
+    if (!store[this.name].$meta) store[this.name].$meta = {}
+    if (!store[this.name].$meta.sequences) store[this.name].$meta.sequences = {}
+    if (!store[this.name].$meta.sequences[name]) {
+      store[this.name].$meta.sequences[name] = new Sequence(0, this)
+    }
+
+    if (!(store[this.name].$meta.sequences[name] instanceof Sequence)) {
+      store[this.name].$meta.sequences[name] = new Sequence(store[this.name].$meta.sequences[name].count, this)
+    }
+
+    return store[this.name].$meta.sequences[name]
+  }
+
+  /**
+   * Searches all of the returned objects.
+   *
+   * Clarification: If you're searching an array,
+   * like $.users is [], you should use
+   * "$.users.*"
+   *
+   * @param {String} path
+   * @param {Object} params
+   */
+  search (path, params) {
+    const arr = this.fetch(path)
+
+    if (typeof params === 'function') {
+      return arr.filter(params)
+    }
+
+    return arr.filter(item => {
+      return Object.keys(params).every(key => {
+        if (Array.isArray(params[key])) {
+          return params[key].some(param => item[key] === param)
+        }
+        return item[key] === params[key]
+      })
+    })
+  }
+
+  /**
+   * Upserts an object in an array.
+   *
+   * Only works on the first returned instance, so only use
+   * this in situations where it can be safely assumed
+   * that only one object will match your query.
+   *
+   * @param {*} path
+   * @param {*} obj
+   */
+  upsert (path, obj) {
+    const item = this.fetch(path)[0]
+    if (item) {
+      this.modify(path, obj)
+    } else {
+      this.push(path, obj)
+    }
   }
 
   /**

@@ -75,6 +75,11 @@ class SchemaObject {
       return this
     }
 
+    if (this.data.type === 'object') {
+      this.data.minProperties = x
+      return this
+    }
+
     this.data.minimum = x
     return this
   }
@@ -87,6 +92,11 @@ class SchemaObject {
 
     if (this.data.type === 'string') {
       this.data.maxLength = x
+      return this
+    }
+
+    if (this.data.type === 'object') {
+      this.data.maxProperties = x
       return this
     }
 
@@ -109,6 +119,12 @@ class SchemaObject {
     if (this.data.type === 'string') {
       this.data.minLength = x
       this.data.maxLength = x
+      return this
+    }
+
+    if (this.data.type === 'object') {
+      this.data.minProperties = x
+      this.data.maxProperties = x
       return this
     }
 

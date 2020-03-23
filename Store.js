@@ -25,6 +25,17 @@ function allowUp2 (x) {
   return x.replace(/\["\^"\]/g, '^')
 }
 
+function flatten (obj, specific, result = {}, str = '') {
+  Object.keys(obj).forEach(key => {
+    if (typeof obj[key] === 'object' && !Array.isArray(obj[key]) && (!specific || specific[key])) {
+      return flatten(obj[key], undefined, result, str + key + '.')
+    }
+    result[str + key] = obj[key]
+  })
+
+  return result
+}
+
 // used to allow easy JSON persisting and linking sequences to the store.
 const sequenceLink = {}
 
@@ -109,7 +120,10 @@ class Store {
       return arr.filter(params)
     }
 
+    params = flatten(params)
+
     return arr.filter(item => {
+      item = flatten(item)
       return Object.keys(params).every(key => {
         if (Array.isArray(params[key])) {
           return params[key].some(param => item[key] === param)

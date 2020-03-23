@@ -198,8 +198,20 @@ class SchemaJoin {
     this.arr = arr
   }
 
+  optional () {
+    return this
+  }
+
+  required () {
+    if (this.parent) {
+      this.parent.addRequired(this.propName)
+    }
+    this.meta.required = true
+    return this
+  }
+
   toJSON () {
-    return { [this.type]: this.arr.map(i => i.toJSON ? i.toJSON() : i) }
+    return { [this.type]: this.arr.map(i => i.toJSON ? i.toJSON() : i), ...this.data }
   }
 }
 

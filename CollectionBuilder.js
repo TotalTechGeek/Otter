@@ -49,7 +49,7 @@ class CollectionBuilder {
         try {
           const body = {
             mode: 'raw',
-            raw: jsf.generate(endpoint.validate.body),
+            raw: JSON.stringify(jsf.generate(endpoint.validate.body)),
             options: {
               raw: {
                 language: 'json'

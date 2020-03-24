@@ -1,7 +1,7 @@
 const cloneDeep = require('lodash/cloneDeep')
 // eslint-disable-next-line no-unused-vars
 const fs = require('fs-extra')
-
+const CollectionBuilder = require('./CollectionBuilder')
 const Schema = require('./Schema')
 const ProjectFileStructure = require('./ProjectFileStructure')
 const CodeBuilder = require('./CodeBuilder')
@@ -16,6 +16,8 @@ module.exports = function (config) {
   }
 
   ProjectFileStructure.init()
+
+  const collection = new CollectionBuilder('./collection.json')
 
   Object.keys(config.domains || {}).forEach(domain => {
     if (typeof config.domains[domain] === 'object') {
@@ -35,6 +37,8 @@ module.exports = function (config) {
       const extractions = []
       const authorizations = []
       const after = []
+
+      collection.addFolder(domain)
 
       actions.forEach(action => {
         if (config.domains[domain][action].endpoint) {
@@ -64,6 +68,8 @@ module.exports = function (config) {
               endpoint.validate[part] = Schema.object(endpoint.validate[part]).toJSON()
             })
           }
+
+          collection.addRequest(domain, action, endpoint, endpoints.route || '')
 
           endpoints[action] = endpoint
         }
@@ -161,4 +167,6 @@ module.exports = function (config) {
   ;(config.plugins || []).forEach(plugin => {
     ProjectFileStructure.createPlugin(plugin)
   })
+
+  fs.writeJSONSync('./collection.json', collection.toJSON())
 }

@@ -148,7 +148,10 @@ class Store {
     if (item) {
       this.modify(path, obj)
     } else {
-      this.push(path, obj)
+      const pathArray = jsonpath.parse(path)
+      pathArray.pop()
+      const strippedPath = allowUp2(jsonpath.stringify(pathArray))
+      this.push(strippedPath, obj)
     }
   }
 

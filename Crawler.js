@@ -75,7 +75,7 @@ class Crawler {
         resultType: 'value'
       })
     })
-    return paths
+    return _.cloneDeep(paths)
   }
 
   fixQueries (queries) {

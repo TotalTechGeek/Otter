@@ -89,7 +89,7 @@ class Crawler {
   fetch (obj, queries) {
     if (typeof queries === 'string' && queries.indexOf('^') === -1) {
       queries = this.fixQueries(queries)
-      return jsonpath.query(obj, queries)
+      return _.cloneDeep(jsonpath.query(obj, queries))
     }
 
     return this._fetch(obj, this.lookup(obj, queries))

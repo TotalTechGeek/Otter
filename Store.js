@@ -38,16 +38,18 @@ function flatten (obj, specific, result = {}, str = '') {
 
 // used to allow easy JSON persisting and linking sequences to the store.
 const sequenceLink = {}
+const sequenceIdentifier = Symbol.for('sequenceIdentifier')
 
 class Sequence {
   constructor (count, store) {
     this.count = count || 0
-    sequenceLink[this] = store
+    this[sequenceIdentifier] = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    sequenceLink[this[sequenceIdentifier]] = store
   }
 
   next () {
     const count = ++this.count
-    if (sequenceLink[this]) sequenceLink[this].save()
+    if (sequenceLink[this[sequenceIdentifier]]) sequenceLink[this[sequenceIdentifier]].save()
     return count
   }
 }
@@ -64,6 +66,7 @@ class Store {
 
   save () {
     if (this.options.persist) {
+      if (this.$meta) store[this.name].$meta = this.$meta
       const data = JSON.stringify(store[this.name])
       fs.writeFileSync(this.options.persist.fileName, data)
     }
@@ -82,6 +85,7 @@ class Store {
 
   ingest (data) {
     store[this.name] = cloneDeep(data)
+    if (store[this.name].$meta) this.$meta = store[this.name].$meta
   }
 
   /**
@@ -90,17 +94,17 @@ class Store {
    * @returns {Sequence}
    */
   sequence (name) {
-    if (!store[this.name].$meta) store[this.name].$meta = {}
-    if (!store[this.name].$meta.sequences) store[this.name].$meta.sequences = {}
-    if (!store[this.name].$meta.sequences[name]) {
-      store[this.name].$meta.sequences[name] = new Sequence(0, this)
+    if (!this.$meta) this.$meta = {}
+    if (!this.$meta.sequences) this.$meta.sequences = {}
+    if (!this.$meta.sequences[name]) {
+      this.$meta.sequences[name] = new Sequence(0, this)
     }
 
-    if (!(store[this.name].$meta.sequences[name] instanceof Sequence)) {
-      store[this.name].$meta.sequences[name] = new Sequence(store[this.name].$meta.sequences[name].count, this)
+    if (!(this.$meta.sequences[name] instanceof Sequence)) {
+      this.$meta.sequences[name] = new Sequence(this.$meta.sequences[name].count, this)
     }
 
-    return store[this.name].$meta.sequences[name]
+    return this.$meta.sequences[name]
   }
 
   /**
@@ -258,7 +262,6 @@ class Store {
      */
   fetch (path, filter) {
     const items = Crawler.fetch(store[this.name], path)
-
     if (filter) {
       if (Array.isArray(filter)) {
         return items.map(item => {

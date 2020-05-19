@@ -86,6 +86,7 @@ function getEndpoints2 (config) {
       [i.method.toLowerCase()]: {
         parameters: i.parameters,
         responses: i.responses,
+        description: i.description,
         requestBody: i.requestBody
       }
     })

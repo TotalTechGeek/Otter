@@ -72,7 +72,7 @@ function getEndpoints (config) {
         if (endpointDocument.route.endsWith('/')) endpointDocument.route = endpointDocument.route.substring(0, endpointDocument.route.length - 1)
         endpointDocument.method = endpoint.method || 'GET'
 
-        if (endpoint.description) { endpointDocument.description = config.domains[key][key2].description || endpoint.description }
+        if (config.domains[key][key2].description || endpoint.description) { endpointDocument.description = config.domains[key][key2].description || endpoint.description }
 
         return endpointDocument
       }

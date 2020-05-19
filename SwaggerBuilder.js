@@ -79,13 +79,13 @@ function getEndpoints (config) {
 
 function getEndpoints2 (config) {
   return getEndpoints(config).reduce((accum, i) => {
-    accum[i.route] = {
+    accum[i.route] = Object.assign(accum[i.route] || {}, {
       [i.method.toLowerCase()]: {
         parameters: i.parameters,
         responses: i.responses,
         requestBody: i.requestBody
       }
-    }
+    })
     return accum
   }, {})
 }

@@ -1,6 +1,6 @@
 {
   "name": "ottermator",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Microservice Code Generator",
   "main": "index.js",
   "scripts": {
@@ -20,6 +20,7 @@
     "express": "^4.17.1",
     "fs-extra": "^8.1.0",
     "json-schema-faker": "^0.5.0-rc23",
+    "json-to-pretty-yaml": "^1.2.2",
     "jsonpath": "^1.0.2",
     "jsonpath-plus": "^2.0.0",
     "lodash": "^4.17.15",

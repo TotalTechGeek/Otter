@@ -5,6 +5,7 @@ const CollectionBuilder = require('./CollectionBuilder')
 const Schema = require('./Schema')
 const ProjectFileStructure = require('./ProjectFileStructure')
 const CodeBuilder = require('./CodeBuilder')
+const { convertSwagger } = require('./SwaggerBuilder')
 module.exports = function (config) {
   const TypeToType = {
     number: 'Number',
@@ -16,6 +17,14 @@ module.exports = function (config) {
   }
 
   ProjectFileStructure.init()
+
+  if (!fs.existsSync('./swagger.yaml')) {
+    try {
+      fs.writeFileSync('./swagger.yaml', convertSwagger(config))
+    } catch (ex) {
+      console.error(ex)
+    }
+  }
 
   const collection = new CollectionBuilder('./collection.json')
 

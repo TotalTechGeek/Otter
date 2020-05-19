@@ -71,6 +71,9 @@ function getEndpoints (config) {
         endpointDocument.route = (config.domains[key].route || '') + (route || '/')
         if (endpointDocument.route.endsWith('/')) endpointDocument.route = endpointDocument.route.substring(0, endpointDocument.route.length - 1)
         endpointDocument.method = endpoint.method || 'GET'
+
+        if (endpoint.description) { endpointDocument.description = endpoint.description }
+
         return endpointDocument
       }
     })

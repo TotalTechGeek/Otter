@@ -129,6 +129,14 @@ class Store {
     return arr.filter(item => {
       item = flatten(item)
       return Object.keys(params).every(key => {
+        if(Array.isArray(item[key]))
+        {
+          if (Array.isArray(params[key])) {
+            return params[key].length === item[key].length && params[key].every(param => item[key].includes(param))
+          }
+          return item[key].includes(params[key])
+        }
+        
         if (Array.isArray(params[key])) {
           return params[key].some(param => item[key] === param)
         }

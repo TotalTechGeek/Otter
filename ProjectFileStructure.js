@@ -99,8 +99,7 @@ class ProjectFileStructure {
   }
 
   saveExternalsExport () {
-    fs.writeFileSync(`${EXTERNALS}/externals.js`, `module.exports = require('./actual/externals')
-        if(process.env.MOCK) module.exports = require('./mock/externals')`)
+    fs.writeFileSync(`${EXTERNALS}/externals.js`, `if(!process.env.MOCK) module.exports = require('./actual/externals')\nelse module.exports = require('./mock/externals')\n`)
   }
 
   getActualExternalTree (name) {

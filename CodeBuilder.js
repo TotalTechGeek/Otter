@@ -25,7 +25,7 @@ function addLookup (schema, name) {
 }
 
 function hashSchema (schema) {
-  return crypto.createHash('sha256').update(JSON.stringify({ ...schema, title: null, $tracked: null })).digest('base64')
+  return crypto.createHash('sha256').update(JSON.stringify({ ...schema, title: null, $tracked: null, $jsdoc: null })).digest('base64')
 }
 
 function createAnonymousModel (schema) {
@@ -47,7 +47,7 @@ function addModel (schema, backupName) {
   if (names.has(title)) throw new Error(`JSDoc model name: ${title} used twice`)
   names.add(title)
   models[title] = { ...schema, title, $tracked: true }
-  structures.push(jsdoc({ ...schema, title }))
+  structures.push(schema.$jsdoc || jsdoc({ ...schema, title }))
   addLookup(schema, title)
   return title
 }

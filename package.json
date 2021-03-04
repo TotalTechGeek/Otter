@@ -1,6 +1,6 @@
 {
   "name": "ottermator",
-  "version": "0.0.20-alpha",
+  "version": "0.0.21-alpha",
   "description": "Microservice Code Generator",
   "main": "index.js",
   "scripts": {

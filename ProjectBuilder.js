@@ -97,11 +97,11 @@ module.exports = function (config) {
         if (config.domains[domain][action].endpoint) {
           const endpoint = cloneDeep(config.domains[domain][action].endpoint)
 
-          CodeBuilder.addOrUpdateFunction(extractionTree, action, CodeBuilder.combineParameters({
+          CodeBuilder.addOrUpdateFunction(extractionTree, action, {
             req: 'any',
             res: 'any',
             data: 'any'
-          }), {
+          }, {
             isAsync: true,
             statements: ['return data'],
             description: config.domains[domain][action].description
@@ -111,11 +111,11 @@ module.exports = function (config) {
 
           if (endpoint.authorize) {
             authorizations.push(action)
-            CodeBuilder.addOrUpdateFunction(authorizationTree, action, CodeBuilder.combineParameters({
+            CodeBuilder.addOrUpdateFunction(authorizationTree, action, {
               req: 'any',
               res: 'any',
               data: CodeBuilder.combineParameters(actionSchema.properties)
-            }), {
+            }, {
               isAsync: true,
               statements: ['return true'],
               description: config.domains[domain][action].description
@@ -124,11 +124,11 @@ module.exports = function (config) {
 
           if (endpoint.after) {
             after.push(action)
-            CodeBuilder.addOrUpdateFunction(afterTree, action, CodeBuilder.combineParameters({
+            CodeBuilder.addOrUpdateFunction(afterTree, action, {
               req: 'any',
               res: 'any',
               data: 'any'
-            }), {
+            }, {
               isAsync: true,
               statements: ['return data'],
               description: config.domains[domain][action].description

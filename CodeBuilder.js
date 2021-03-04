@@ -1,341 +1,148 @@
-const crawler = require('./Crawler')
-const espree = require('espree')
+const jsdoc = require('json-schema-to-jsdoc')
+const { Project, IndentationText } = require('ts-morph')
+const name = require('./name')
+const standard = require('standard')
+const crypto = require('crypto')
 
-function generateComment (func, start, end) {
-  function generateCommentText (func) {
-    let comment = '*\n *\n * @param {Object} obj'
-    Object.keys(func).forEach(attr => {
-      comment += `\n * @param {${func[attr]}} obj.${attr}`
+// todo: combine these 4
+const models = {}
+const structures = []
+const names = new Set()
+const lookup = {}
+
+const project = new Project({
+  compilerOptions: {
+    allowJs: true
+  },
+  manipulationSettings: {
+    indentationText: IndentationText.TwoSpaces,
+    insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces: true
+  }
+})
+
+function addLookup (schema, name) {
+  lookup[hashSchema(schema)] = name
+}
+
+function hashSchema (schema) {
+  return crypto.createHash('sha256').update(JSON.stringify({ ...schema, title: null, $tracked: null })).digest('base64')
+}
+
+function createAnonymousModel (schema) {
+  if (lookup[hashSchema(schema)]) {
+    return lookup[hashSchema(schema)]
+  }
+  const title = schema.title || `${name.name}Obj${structures.length}`
+  if (names.has(title)) throw new Error(`JSDoc model name: ${title} used twice`)
+  names.add(title)
+  models[title] = { ...schema, title }
+  structures.push(jsdoc({ ...schema, title }))
+  addLookup(schema, title)
+  return title
+}
+
+function addModel (schema, backupName) {
+  if (schema.toJSON) schema = schema.toJSON()
+  const title = schema.title || backupName
+  if (names.has(title)) throw new Error(`JSDoc model name: ${title} used twice`)
+  names.add(title)
+  models[title] = { ...schema, title, $tracked: true }
+  structures.push(jsdoc({ ...schema, title }))
+  addLookup(schema, title)
+  return title
+}
+
+function convertType (schema, required) {
+  if (!required) {
+    return `${convertType(schema, true)}?`
+  }
+  if (typeof schema === 'string') return schema
+  if (schema.toJSON) schema = schema.toJSON()
+  if (schema.$tracked) return schema.title
+  const TypeToType = {
+    number: 'Number',
+    integer: 'Number',
+    string: 'String',
+    array: 'Array',
+    boolean: 'Boolean'
+  }
+
+  if (schema.type === 'object') {
+    return createAnonymousModel(schema)
+  }
+
+  return TypeToType[schema.type] || 'any'
+}
+
+function addOrUpdateFunction (file, name, parameters, { statements, isAsync, description } = { isAsync: false }) {
+  const isTs = !file.getBaseName().endsWith('.js')
+
+  const func = file.getFunction(name) || (file.addFunction({ name, isAsync, statements }) && file.getFunction(name))
+
+  func.setIsAsync(Boolean(isAsync))
+  func.getParameters().forEach(i => i.remove())
+  func.getJsDocs().forEach(i => i.remove())
+
+  Object.keys(parameters).forEach(parameter => {
+    func.addParameter({
+      name: parameter,
+      type: isTs ? `${convertType(parameters[parameter], true)}` : null
     })
-    return comment + '\n'
-  }
-
-  const value = generateCommentText(func)
-  return {
-    type: 'Block',
-    value
-  }
-}
-
-function updateOrAddFunction (tree, functionName, {
-  params,
-  start,
-  end,
-  leadingComments
-}) {
-  if (crawler.lookup(tree, `$.body.[?(@.type === 'FunctionDeclaration')]..[?(@.name === "${functionName}")]^`).length) {
-    return updateFunctionParams(tree, functionName, {
-      params,
-      start,
-      end,
-      leadingComments
-    })
-  } else {
-    return injectIntoBody(tree, generateStubFunction(functionName, {
-      params,
-      start,
-      end,
-      leadingComments
-    }))
-  }
-}
-
-function addExtractionFunction (tree, functionName) {
-  if (!crawler.lookup(tree, `$.body.[?(@.type === 'FunctionDeclaration')]..[?(@.name === "${functionName}")]^`).length) {
-    return injectIntoBody(tree, generateExtractionFunction(functionName))
-  }
-  return tree
-}
-
-function addAuthorizationFunction (tree, functionName) {
-  if (!crawler.lookup(tree, `$.body.[?(@.type === 'FunctionDeclaration')]..[?(@.name === "${functionName}")]^`).length) {
-    return injectIntoBody(tree, generateAuthorizationFunction(functionName))
-  }
-  return tree
-}
-
-function injectIntoBody (tree, ast) {
-  tree.body = tree.body.concat([ast].flat())
-  return tree
-}
-
-function espreeParseText (text) {
-  return espree.parse(text, {
-    ecmaVersion: 2019
-  }).body
-}
-
-function updateFunctionParams (tree, functionName, {
-  params,
-  start,
-  end,
-  leadingComments
-}) {
-  return crawler.modify(tree, `$.body.[?(@.type === 'FunctionDeclaration')]..[?(@.name === "${functionName}")]^`, (item) => {
-    if (item.type !== 'FunctionDeclaration') return item
-    item.params = params
-    if (leadingComments) item.leadingComments = leadingComments
-    if (start) item.start = start
-    if (end) item.end = end
-    return item
-  })
-}
-
-function createNameProperty (name) {
-  return {
-    type: 'Property',
-    shorthand: true,
-    method: false,
-    computed: false,
-    key: {
-      type: 'Identifier',
-      name: name
-    },
-
-    kind: 'init',
-    value: {
-      type: 'Identifier',
-      name: name
-    }
-  }
-}
-
-function createProperty (identifierName, identifierValue) {
-  if (typeof identifierValue === 'object') {
-    return {
-      type: 'Property',
-
-      key: {
-        type: 'Identifier',
-        name: identifierName
-      },
-      value: identifierValue,
-      kind: 'init'
-    }
-  }
-
-  return {
-    type: 'Property',
-
-    key: {
-      type: 'Identifier',
-      name: identifierName
-    },
-    value: {
-      type: 'Literal',
-      value: identifierValue,
-      raw: JSON.stringify(identifierValue)
-    },
-    kind: 'init'
-  }
-}
-
-function updateOrAddProperty (props, identifierName, identifierValue) {
-  const prop = props.find(i => i.key.name === identifierName)
-  if (prop) {
-    prop.value.value = identifierValue
-    prop.value.raw = JSON.stringify(identifierValue)
-  } else {
-    props.push(createProperty(identifierName, identifierValue))
-  }
-}
-
-function modifyFunctionCallProperties (tree, functionName, invokerName, properties) {
-  return crawler.modify(tree, `$..[?(@.name==='${functionName}')]^.arguments.[?(@.type==='Identifier' && @.name === 'name')]^.[?(@.value=='${invokerName}')]^^`, (item) => {
-    Object.keys(properties).forEach(property => {
-      updateOrAddProperty(item, property, properties[property])
-    })
-    return item
-  })
-}
-
-function createObjectParam (params) {
-  return {
-    type: 'ObjectPattern',
-
-    properties: params.map(createNameProperty)
-  }
-}
-
-function createObjectExpression (props) {
-  return {
-    type: 'ObjectExpression',
-    properties: props
-  }
-}
-
-function convertToAST (func) {
-  return espree.parse(func.toString(), {
-    ecmaVersion: 2019
-  }).body[0]
-}
-
-function generateArrowFunction (params, isExpression, isAsync) {
-  if (typeof isAsync === 'undefined') isAsync = true
-
-  return {
-    type: 'ArrowFunctionExpression',
-    id: null,
-    expression: isExpression,
-    generator: false,
-    async: true,
-
-    params: params,
-    body: {
-      type: 'BlockStatement',
-      body: []
-    }
-  }
-}
-
-function generateExtractionFunction (name) {
-  return {
-    type: 'FunctionDeclaration',
-    id: {
-      type: 'Identifier',
-      name: name
-    },
-    expression: false,
-    generator: false,
-    async: true,
-    params: [{
-      type: 'Identifier',
-      name: 'req'
-    }, {
-      type: 'Identifier',
-      name: 'res'
-    }, {
-      type: 'Identifier',
-      name: 'data'
-    }],
-    body: {
-      type: 'BlockStatement',
-      body: [{
-        type: 'ReturnStatement',
-        argument: {
-          type: 'Identifier',
-          name: 'data'
-        }
-      }]
-    }
-  }
-}
-
-function generateAuthorizationFunction (name) {
-  return {
-    type: 'FunctionDeclaration',
-    id: {
-      type: 'Identifier',
-      name: name
-    },
-    expression: false,
-    generator: false,
-    async: true,
-    params: [{
-      type: 'Identifier',
-      name: 'req'
-    }, {
-      type: 'Identifier',
-      name: 'res'
-    }, {
-      type: 'Identifier',
-      name: 'data'
-    }],
-    body: {
-      type: 'BlockStatement',
-      body: [{
-        type: 'ReturnStatement',
-        argument: {
-          type: 'Identifier',
-          name: 'true'
-        }
-      }]
-    }
-  }
-}
-
-function generateStubFunction (name, {
-  params,
-  start,
-  end,
-  leadingComments
-}, isExpression, isAsync) {
-  if (typeof isAsync === 'undefined') isAsync = true
-  return {
-    type: 'FunctionDeclaration',
-    id: {
-      type: 'Identifier',
-      name: name
-    },
-    start: start,
-    leadingComments: leadingComments,
-    end: end,
-    expression: isExpression,
-    generator: false,
-    async: isAsync,
-    params: params,
-    body: {
-      type: 'BlockStatement',
-      body: []
-    }
-  }
-}
-
-function checkIfExportIsPlugin (tree) {
-  return ((crawler.fetch(tree, '$..[?(@.type === \'AssignmentExpression\')].left.object[?(@ === \'module\')]^^^..right') || [])[0] || { type: 'ObjectExpression' }).type !== 'ObjectExpression'
-}
-
-function updateExports (tree, funcs) {
-  let modified = false
-
-  tree = crawler.modify(tree, '$..[?(@.type === \'AssignmentExpression\')].left.object[?(@ === \'module\')]^^^..right', objectAssignment => {
-    modified = true
-    return createObjectExpression(funcs.map(createNameProperty))
   })
 
-  if (!modified) {
-    return injectIntoBody(tree, {
-      type: 'ExpressionStatement',
-      expression: {
-        type: 'AssignmentExpression',
-        operator: '=',
-        left: {
-          type: 'MemberExpression',
-          object: {
-            type: 'Identifier',
-            name: 'module'
-          },
-          property: {
-            type: 'Identifier',
-            name: 'exports'
-          },
-          computed: false
-        },
-        right: createObjectExpression(funcs.map(createNameProperty))
+  func.replaceWithText(standard.lintTextSync(func.getText(), { fix: true }).results[0].output.trim())
+  func.addJsDoc({
+    description,
+    tags: Object.keys(parameters).map(param => {
+      const end = parameters[param].description ? ' - ' + parameters[param].description : ''
+      let type = convertType(parameters[param].schema || parameters[param], true)
+      if (type.endsWith('?')) {
+        type = type.substring(0, type.length - 1)
+        param = `[${param}]`
+      }
+      return {
+        tagName: 'param',
+        text: `{${type.schema || type}} ${parameters[param].documented || param}${end}`
       }
     })
+  })
+}
+
+function combineParameters (params, required = []) {
+  const written = `{${Object.keys(params).join(', ')}}`
+  const documented = `${Object.keys(params).join('_')}`
+  const result = {
+    [written]: {
+      schema: `{ ${Object.keys(params).map(i => {
+        return `${i}${required.includes(i) ? '' : '?'}: ${convertType(params[i], true)}`
+    }).join(', ')} }`,
+      documented
+    }
   }
-  return tree
+
+  return result
+}
+
+function updateExports (file, arr) {
+  const exports = file.getStatements().filter(i => i.constructor.name === 'ExpressionStatement' && i.getText().trim().startsWith('module.exports ='))
+  if (exports.length) {
+    exports.forEach(i => i.replaceWithText(`module.exports = { \n${arr.join(',\n')}\n }`).formatText())
+  } else {
+    file.addStatements(`module.exports = { \n${arr.join(',\n')}\n }`).forEach(i => i.formatText())
+  }
+}
+
+function modifyEnd (file) {
+  file.replaceWithText(file.getFullText().trim() + '\n')
 }
 
 module.exports = {
+  combineParameters,
+  project,
+  structures,
+  models,
+  addOrUpdateFunction,
   updateExports,
-  checkIfExportIsPlugin,
-  generateArrowFunction,
-  generateComment,
-  generateStubFunction,
-  convertToAST,
-  createNameProperty,
-  createObjectExpression,
-  createObjectParam,
-  createProperty,
-  updateFunctionParams,
-  updateOrAddFunction,
-  updateOrAddProperty,
-  espreeParseText,
-  modifyFunctionCallProperties,
-  generateExtractionFunction,
-  addExtractionFunction,
-  generateAuthorizationFunction,
-  addAuthorizationFunction
+  modifyEnd,
+  addModel
 }

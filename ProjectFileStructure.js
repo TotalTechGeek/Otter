@@ -1,6 +1,4 @@
 const fs = require('fs-extra')
-const espree = require('espree')
-const escodegen = require('escodegen')
 const DOMAINS = './domains'
 const EXTERNALS = './externals'
 const standard = require('standard')
@@ -19,21 +17,8 @@ class ProjectFileStructure {
     this.createFolder(DOMAINS)
   }
 
-  getTree (file) {
-    const tree = espree.parse(fs.readFileSync(file).toString(), {
-      ecmaVersion: 2019,
-      comment: true,
-      tokens: true,
-      range: true
-    })
-
-    escodegen.attachComments(tree, tree.comments, tree.tokens)
-
-    return tree
-  }
-
   getDomainTree (domain, name) {
-    return this.getTree(`${DOMAINS}/${domain}/${name}`)
+    return (`${DOMAINS}/${domain}/${name}`)
   }
 
   getDomainActionTree (name) {
@@ -41,12 +26,12 @@ class ProjectFileStructure {
   }
 
   getMockExternalTree (name) {
-    return this.getTree(`${EXTERNALS}/mock/${name}.js`)
+    return (`${EXTERNALS}/mock/${name}.js`)
   }
 
   saveActionsExport (domains) {
     const head = domains.map(domain => {
-      return `const ${domain} = require('./${domain}/actions.js');\n`
+      return `const ${domain} = require('./${domain}/actions.js')\n`
     }).join('')
 
     const exportText = `\nmodule.exports = { ${domains.join(', ')} }`
@@ -99,11 +84,11 @@ class ProjectFileStructure {
   }
 
   saveExternalsExport () {
-    fs.writeFileSync(`${EXTERNALS}/externals.js`, `if(!process.env.MOCK) module.exports = require('./actual/externals')\nelse module.exports = require('./mock/externals')\n`)
+    fs.writeFileSync(`${EXTERNALS}/externals.js`, 'if(!process.env.MOCK) module.exports = require(\'./actual/externals\')\nelse module.exports = require(\'./mock/externals\')\n')
   }
 
   getActualExternalTree (name) {
-    return this.getTree(`${EXTERNALS}/actual/${name}.js`)
+    return (`${EXTERNALS}/actual/${name}.js`)
   }
 
   saveActualExternalTree (name, tree) {
@@ -116,21 +101,6 @@ class ProjectFileStructure {
 
   fixCode (code) {
     return standard.lintTextSync(code, { fix: true }).results[0].output
-  }
-
-  saveTree (file, tree) {
-    const code = escodegen.generate(tree, {
-      ecmaVersion: 2019,
-      comment: true
-    })
-
-    const styledCode = this.fixCode(code)
-
-    fs.writeFileSync(file, styledCode)
-  }
-
-  saveDomainTree (domain, name, tree) {
-    return this.saveTree(`${DOMAINS}/${domain}/${name}`, tree)
   }
 
   init () {
@@ -165,27 +135,27 @@ class ProjectFileStructure {
   createDomain (name) {
     this.createDomains()
     this.createFolder(`${DOMAINS}/${name}`)
-    this.createFile(`${DOMAINS}/${name}/steps.js`, '// used for implementing Cucumber')
+    this.createFile(`${DOMAINS}/${name}/steps.js`, '// used for implementing Cucumber\n\n')
 
-    this.createFile(`${DOMAINS}/${name}/actions.js`, `// eslint-disable-next-line no-unused-vars\nconst externals = require('../../externals/externals');\nconst ${variableName} = require('${packageName}');\nmodule.exports = {};\n${variableName}.Handler.wrapLoad('${DOMAINS}/${name}/actionValidations', module.exports)`)
-    this.createFile(`${DOMAINS}/${name}/extractions.js`, `const ${variableName} = require('${packageName}');
+    this.createFile(`${DOMAINS}/${name}/actions.js`, this.fixCode(`// eslint-disable-next-line no-unused-vars\nconst externals = require('../../externals/externals');\nconst ${variableName} = require('${packageName}');\nmodule.exports = {};\n${variableName}.Handler.wrapLoad('${DOMAINS}/${name}/actionValidations', module.exports)`))
+    this.createFile(`${DOMAINS}/${name}/extractions.js`, this.fixCode(`const ${variableName} = require('${packageName}');
 // eslint-disable-next-line no-unused-vars
 const externals = require('../../externals/externals');
 module.exports = {};
 ${variableName}.ErrorHandler.wrap(module.exports);
-`)
-    this.createFile(`${DOMAINS}/${name}/after.js`, `const ${variableName} = require('${packageName}');
+`))
+    this.createFile(`${DOMAINS}/${name}/after.js`, this.fixCode(`const ${variableName} = require('${packageName}');
 // eslint-disable-next-line no-unused-vars
 const externals = require('../../externals/externals');
 module.exports = {};
 ${variableName}.ErrorHandler.wrap(module.exports);
-`)
-    this.createFile(`${DOMAINS}/${name}/authorizations.js`, `const ${variableName} = require('${packageName}');
+`))
+    this.createFile(`${DOMAINS}/${name}/authorizations.js`, this.fixCode(`const ${variableName} = require('${packageName}');
 // eslint-disable-next-line no-unused-vars
 const externals = require('../../externals/externals');
 module.exports = {};
 ${variableName}.ErrorHandler.wrap(module.exports);
-`)
+`))
   }
 
   writeDomainConfig (domain, name, data) {
@@ -208,8 +178,8 @@ ${variableName}.ErrorHandler.wrap(module.exports);
 
   createExternal (name) {
     this.createExternals()
-    this.createFile(`${EXTERNALS}/mock/${name}.js`, `const ${variableName} = require('${packageName}');\nmodule.exports = {};\n${variableName}.Handler.wrapLoad('${EXTERNALS}/mock/${name}Validations', module.exports);`)
-    this.createFile(`${EXTERNALS}/actual/${name}.js`, `const ${variableName} = require('${packageName}');\nmodule.exports = {};\n${variableName}.Handler.wrapLoad('${EXTERNALS}/actual/${name}Validations', module.exports);`)
+    this.createFile(`${EXTERNALS}/mock/${name}.js`, this.fixCode(`const ${variableName} = require('${packageName}');\nmodule.exports = {};\n${variableName}.Handler.wrapLoad('${EXTERNALS}/mock/${name}Validations', module.exports);`))
+    this.createFile(`${EXTERNALS}/actual/${name}.js`, this.fixCode(`const ${variableName} = require('${packageName}');\nmodule.exports = {};\n${variableName}.Handler.wrapLoad('${EXTERNALS}/actual/${name}Validations', module.exports);`))
   }
 }
 

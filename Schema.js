@@ -12,14 +12,14 @@ class SchemaObject {
 
     if (this.data.properties) {
       Object.keys(this.data.properties).forEach(property => {
+        if (this.data.properties[property].meta && this.data.properties[property].meta.required) {
+          this.addRequired(property)
+        }
+
         if (this.data.properties[property] instanceof SchemaObject || this.data.properties[property] instanceof SchemaJoin) {
           this.data.properties[property].parent = this
           this.data.properties[property].propName = property
           this.data.properties[property].title = property
-
-          if (this.data.properties[property].meta.required) {
-            this.addRequired(property)
-          }
         } else if (this.data.properties[property] instanceof Function && COMMON[this.data.properties[property].name]) {
           this.data.properties[property] = COMMON[this.data.properties[property].name].clone()
           this.data.properties[property].parent = this

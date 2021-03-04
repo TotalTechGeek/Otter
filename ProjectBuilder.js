@@ -6,6 +6,39 @@ const Schema = require('./Schema')
 const ProjectFileStructure = require('./ProjectFileStructure')
 const CodeBuilder = require('./CodeBuilder')
 const { convertSwagger } = require('./SwaggerBuilder')
+const Name = require('./name')
+
+function replaceModels (i) {
+  if (i && i.$model) {
+    return { ...CodeBuilder.models[i.$model], meta: { ...CodeBuilder.models[i.$model].meta, required: i.required } }
+  }
+  return i
+}
+
+function toJson (i) {
+  if (i && i.toJSON) return i.toJSON()
+  return i
+}
+
+function traverse (obj, mutator, pre) {
+  if (pre) obj = pre(obj)
+  if (obj && typeof obj === 'object') {
+    Object.keys(obj).forEach(key => {
+      if (obj[key] && typeof obj[key] === 'object') {
+        if (Array.isArray(obj[key])) {
+          obj[key].forEach(i => traverse(i, mutator, pre))
+        } else {
+          traverse(obj[key], mutator, pre)
+        }
+      }
+      obj[key] = mutator(obj[key])
+    })
+    return mutator(obj)
+  } else {
+    return mutator(obj)
+  }
+}
+
 module.exports = function (config) {
   const TypeToType = {
     number: 'Number',
@@ -28,6 +61,14 @@ module.exports = function (config) {
 
   const collection = new CollectionBuilder('./collection.json')
 
+  Object.keys(config.models || {}).forEach(model => {
+    if (config.models[model].toJSON) config.models[model] = config.models[model].toJSON()
+
+    if (typeof config.models[model] === 'object') {
+      CodeBuilder.addModel(traverse(config.models[model], replaceModels), model)
+    }
+  })
+
   Object.keys(config.domains || {}).forEach(domain => {
     if (typeof config.domains[domain] === 'object') {
       ProjectFileStructure.createDomain(domain)
@@ -38,10 +79,10 @@ module.exports = function (config) {
       endpoints.route = config.domains[domain].route
 
       const actions = Object.keys(config.domains[domain]).filter(i => typeof config.domains[domain][i] === 'object')
-      let tree = ProjectFileStructure.getDomainActionTree(domain)
-      let extractionTree = ProjectFileStructure.getDomainTree(domain, 'extractions.js')
-      let authorizationTree = ProjectFileStructure.getDomainTree(domain, 'authorizations.js')
-      let afterTree = ProjectFileStructure.getDomainTree(domain, 'after.js')
+      const tree = CodeBuilder.project.addSourceFileAtPath(ProjectFileStructure.getDomainActionTree(domain))
+      const extractionTree = CodeBuilder.project.addSourceFileAtPath(ProjectFileStructure.getDomainTree(domain, 'extractions.js'))
+      const authorizationTree = CodeBuilder.project.addSourceFileAtPath(ProjectFileStructure.getDomainTree(domain, 'authorizations.js'))
+      const afterTree = CodeBuilder.project.addSourceFileAtPath(ProjectFileStructure.getDomainTree(domain, 'after.js'))
 
       const extractions = []
       const authorizations = []
@@ -50,25 +91,48 @@ module.exports = function (config) {
       collection.addFolder(domain)
 
       actions.forEach(action => {
+        const input = traverse(config.domains[domain][action].input, replaceModels, toJson)
+
+        const actionSchema = Schema.object(input).toJSON()
+
         if (config.domains[domain][action].endpoint) {
           const endpoint = cloneDeep(config.domains[domain][action].endpoint)
 
-          extractionTree = CodeBuilder.addExtractionFunction(extractionTree, action)
+          CodeBuilder.addOrUpdateFunction(extractionTree, action, CodeBuilder.combineParameters({
+            req: 'any',
+            res: 'any',
+            data: 'any'
+          }), {
+            isAsync: true,
+            statements: ['return data'],
+            description: config.domains[domain][action].description
+          })
+
           extractions.push(action)
 
           if (endpoint.authorize) {
             authorizations.push(action)
-            authorizationTree = CodeBuilder.addAuthorizationFunction(authorizationTree, action)
+            CodeBuilder.addOrUpdateFunction(authorizationTree, action, CodeBuilder.combineParameters({
+              req: 'any',
+              res: 'any',
+              data: CodeBuilder.combineParameters(actionSchema.properties)
+            }), {
+              isAsync: true,
+              statements: ['return true'],
+              description: config.domains[domain][action].description
+            })
           }
 
           if (endpoint.after) {
             after.push(action)
-            afterTree = CodeBuilder.addExtractionFunction(afterTree, action)
-          }
-
-          if (endpoint.extract) {
-            Object.keys(endpoint.extract).forEach(extract => {
-              endpoint.extract[extract] = endpoint.extract[extract].toJSON ? endpoint.extract[extract].toJSON() : endpoint.extract[extract]
+            CodeBuilder.addOrUpdateFunction(afterTree, action, CodeBuilder.combineParameters({
+              req: 'any',
+              res: 'any',
+              data: 'any'
+            }), {
+              isAsync: true,
+              statements: ['return data'],
+              description: config.domains[domain][action].description
             })
           }
 
@@ -83,9 +147,7 @@ module.exports = function (config) {
           endpoints[action] = endpoint
         }
 
-        const input = config.domains[domain][action].input
-        let output = config.domains[domain][action].output
-        const actionSchema = Schema.object(input).toJSON()
+        let output = traverse(config.domains[domain][action].output, replaceModels, toJson)
         output = Schema.convert(output) || output
         const actionOutputSchema = output ? output.toJSON ? output.toJSON() : output : null
         actionValidation[action] = { input: actionSchema, output: actionOutputSchema }
@@ -95,29 +157,31 @@ module.exports = function (config) {
           commentValues[prop] = TypeToType[actionSchema.properties[prop].type] || '*'
         })
 
-        tree = CodeBuilder.updateOrAddFunction(tree, action, {
-          params: [CodeBuilder.createObjectParam(Object.keys(actionSchema.properties))],
-          leadingComments: [
-            CodeBuilder.generateComment(commentValues)
-          ]
+        CodeBuilder.addOrUpdateFunction(tree, action, CodeBuilder.combineParameters(actionSchema.properties, actionSchema.required), {
+          isAsync: true,
+          description: config.domains[domain][action].description
         })
       })
 
-      if (!CodeBuilder.checkIfExportIsPlugin(tree)) { tree = CodeBuilder.updateExports(tree, actions) }
-      if (!CodeBuilder.checkIfExportIsPlugin(authorizationTree)) { authorizationTree = CodeBuilder.updateExports(authorizationTree, authorizations) }
-      if (!CodeBuilder.checkIfExportIsPlugin(extractionTree)) { extractionTree = CodeBuilder.updateExports(extractionTree, extractions) }
-      if (!CodeBuilder.checkIfExportIsPlugin(afterTree)) { afterTree = CodeBuilder.updateExports(afterTree, after) }
+      CodeBuilder.updateExports(tree, extractions)
+      CodeBuilder.updateExports(extractionTree, extractions)
+      CodeBuilder.updateExports(authorizationTree, authorizations)
+      CodeBuilder.updateExports(afterTree, after)
 
-      ProjectFileStructure.saveDomainTree(domain, 'authorizations.js', authorizationTree)
-      ProjectFileStructure.saveDomainTree(domain, 'extractions.js', extractionTree)
-      ProjectFileStructure.saveDomainTree(domain, 'after.js', afterTree)
+      CodeBuilder.modifyEnd(tree)
+      CodeBuilder.modifyEnd(extractionTree)
+      CodeBuilder.modifyEnd(authorizationTree)
+      CodeBuilder.modifyEnd(afterTree)
+
+      tree.saveSync()
+      extractionTree.saveSync()
+      authorizationTree.saveSync()
+      afterTree.saveSync()
 
       ProjectFileStructure.saveDomainRoutesExport(domain)
 
-      ProjectFileStructure.writeDomainConfig(domain, 'actionValidations.json', JSON.stringify(actionValidation))
-      ProjectFileStructure.writeDomainConfig(domain, 'endpoints.json', JSON.stringify(endpoints))
-
-      ProjectFileStructure.saveDomainActionTree(domain, tree)
+      ProjectFileStructure.writeDomainConfig(domain, 'actionValidations.json', JSON.stringify(actionValidation, undefined, 2))
+      ProjectFileStructure.writeDomainConfig(domain, 'endpoints.json', JSON.stringify(endpoints, undefined, 2))
     }
   })
   ProjectFileStructure.saveActionsExport(Object.keys(config.domains))
@@ -128,13 +192,13 @@ module.exports = function (config) {
       ProjectFileStructure.createExternal(domain)
 
       const actions = Object.keys(config.externals[domain]).filter(i => typeof config.externals[domain][i] === 'object')
-      let tree = ProjectFileStructure.getActualExternalTree(domain)
-      let tree2 = ProjectFileStructure.getMockExternalTree(domain)
+      const tree = CodeBuilder.project.addSourceFileAtPath(ProjectFileStructure.getActualExternalTree(domain))
+      const tree2 = CodeBuilder.project.addSourceFileAtPath(ProjectFileStructure.getMockExternalTree(domain))
       const actionValidation = {}
 
       actions.forEach(action => {
-        const input = config.externals[domain][action].input
-        let output = config.externals[domain][action].output
+        const input = traverse(config.externals[domain][action].input, replaceModels, toJson)
+        let output = traverse(config.externals[domain][action].output, replaceModels, toJson)
         const actionSchema = Schema.object(input).toJSON()
         output = Schema.convert(output) || output
         const actionOutputSchema = output ? output.toJSON ? output.toJSON() : output : null
@@ -145,28 +209,22 @@ module.exports = function (config) {
           commentValues[prop] = TypeToType[actionSchema.properties[prop].type] || '*'
         })
 
-        tree = CodeBuilder.updateOrAddFunction(tree, action, {
-          params: [CodeBuilder.createObjectParam(Object.keys(actionSchema.properties || {}))],
-          leadingComments: [
-            CodeBuilder.generateComment(commentValues)
-          ]
+        CodeBuilder.addOrUpdateFunction(tree, action, CodeBuilder.combineParameters(actionSchema.properties, actionSchema.required), {
+          isAsync: true
         })
 
-        tree2 = CodeBuilder.updateOrAddFunction(tree2, action, {
-          params: [CodeBuilder.createObjectParam(Object.keys(actionSchema.properties || {}))],
-          leadingComments: [
-            CodeBuilder.generateComment(commentValues)
-          ]
+        CodeBuilder.addOrUpdateFunction(tree2, action, CodeBuilder.combineParameters(actionSchema.properties, actionSchema.required), {
+          isAsync: true
         })
       })
 
-      tree = CodeBuilder.updateExports(tree, actions)
-      tree2 = CodeBuilder.updateExports(tree2, actions)
+      CodeBuilder.updateExports(tree, actions)
+      CodeBuilder.updateExports(tree2, actions)
 
-      ProjectFileStructure.writeExternalConfig(`${domain}Validations`, JSON.stringify(actionValidation))
+      ProjectFileStructure.writeExternalConfig(`${domain}Validations`, JSON.stringify(actionValidation, undefined, 2))
 
-      ProjectFileStructure.saveActualExternalTree(domain, tree)
-      ProjectFileStructure.saveMockExternalTree(domain, tree2)
+      tree.saveSync()
+      tree2.saveSync()
     }
   })
 
@@ -177,5 +235,6 @@ module.exports = function (config) {
     ProjectFileStructure.createPlugin(plugin)
   })
 
+  fs.writeFileSync(`./models.${Name.name.toLowerCase()}.js`, CodeBuilder.structures.join('\n'))
   fs.writeJSONSync('./collection.json', collection.toJSON())
 }

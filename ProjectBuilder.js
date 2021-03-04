@@ -51,14 +51,6 @@ module.exports = function (config) {
 
   ProjectFileStructure.init()
 
-  if (!fs.existsSync('./swagger.yaml')) {
-    try {
-      fs.writeFileSync('./swagger.yaml', convertSwagger(config))
-    } catch (ex) {
-      console.error(ex)
-    }
-  }
-
   const collection = new CollectionBuilder('./collection.json')
 
   Object.keys(config.models || {}).forEach(model => {
@@ -69,6 +61,13 @@ module.exports = function (config) {
     }
   })
 
+  if (!fs.existsSync('./swagger.yaml')) {
+    try {
+      fs.writeFileSync('./swagger.yaml', convertSwagger(traverse(config, replaceModels, toJson)))
+    } catch (ex) {
+      console.error(ex)
+    }
+  }
   Object.keys(config.domains || {}).forEach(domain => {
     if (typeof config.domains[domain] === 'object') {
       ProjectFileStructure.createDomain(domain)
@@ -138,7 +137,12 @@ module.exports = function (config) {
 
           if (endpoint.validate) {
             Object.keys(endpoint.validate).forEach(part => {
-              endpoint.validate[part] = Schema.object(endpoint.validate[part]).toJSON()
+              const schema = traverse(endpoint.validate[part], replaceModels, toJson)
+              if (schema.type) {
+                endpoint.validate[part] = toJson(schema)
+              } else {
+                endpoint.validate[part] = Schema.object(schema).toJSON()
+              }
             })
           }
 

@@ -1,4 +1,7 @@
 const fs = require('fs-extra')
+
+const { objectQueryBuilder } = require('json-power-query')
+
 const { Router: ExpressRouter } = require('express')
 
 const Handler = require('./Handler')
@@ -6,8 +9,6 @@ const Schema = require('./Schema')
 const Events = require('./Events')
 const process = require('process')
 const { packageName } = require('./name')
-
-const { JSONPath } = require('jsonpath-plus')
 const Ajv = require('ajv')
 
 const validationCompiler = new Ajv()
@@ -29,29 +30,6 @@ function $ (func) {
       }
       return res.status(400).json({ name: 'UnknownError', message: 'An error has occurred.', status: 400, stack: err.stack })
     }
-  }
-}
-
-class Extraction {
-  static extract (extractions, req, res) {
-    const data = {}
-
-    Object.keys(extractions).forEach(extract => {
-      const extractConfig = extractions[extract]
-      if (extractConfig.type === 'request') {
-        if (extractConfig.from.startsWith('$')) {
-          data[extract] = JSONPath({
-            path: extractConfig.from,
-            resultType: 'value',
-            json: req
-          })[0]
-        } else {
-          data[extract] = (req[extractConfig.from] || {})[extractConfig.item || extract]
-        }
-      }
-    })
-
-    return data
   }
 }
 
@@ -156,29 +134,32 @@ class Router {
       validations = {}
     }
 
+    let dataSetup = () => ({})
+    if (route.extract) {
+      dataSetup = objectQueryBuilder(route.extract)
+    }
+
     this.router[(route.method || 'GET').toLowerCase()](route.route || '/', $(async (req, res, next) => {
       req[packageName] = req[packageName] || {}
-      req[packageName].data = {}
+      // req[packageName].data = {}
       req[packageName].action = route.name
       req[packageName].route = route.route
       req[packageName].start = process.hrtime()
 
       Events.emit('EndpointCalled', { req, res, action: req[packageName].action, route: req[packageName].route })
 
-      Object.keys(looseNumberHandler).forEach(reqPart => {
-        looseNumberHandler[reqPart].forEach(prop => {
+      for (const reqPart in looseNumberHandler) {
+        for (const prop of looseNumberHandler[reqPart]) {
           if (!isNaN(req[reqPart][prop])) req[reqPart][prop] = parseFloat(req[reqPart][prop])
-        })
-      })
-
-      if (route.extract) {
-        req[packageName].data = Extraction.extract(route.extract, req, res)
+        }
       }
 
-      Object.keys(validations).forEach(v => {
+      req[packageName].data = dataSetup(req)
+
+      for (const v in validations) {
         const verified = validations[v](req[v])
         if (!verified) throw new EndpointNotValidatedError(route.route, route.name, validations[v].errors, v)
-      })
+      }
 
       Events.emit('EndpointReady', { req, res, data: req[packageName].data, action: req[packageName].action, route: req[packageName].route })
 

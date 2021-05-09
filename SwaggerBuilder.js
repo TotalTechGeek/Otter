@@ -31,7 +31,6 @@ function getEndpoints (config) {
             const params = endpoint.validate.params
             endpointDocument.parameters = Object.keys(params).map(i => {
               const json = toJson(params[i])
-              console.log(route, json)
               return {
                 name: i,
                 in: 'path',

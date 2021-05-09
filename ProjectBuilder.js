@@ -3,6 +3,7 @@ const cloneDeep = require('lodash/cloneDeep')
 const fs = require('fs-extra')
 const CollectionBuilder = require('./CollectionBuilder')
 const Schema = require('./Schema')
+const { RequestExtraction } = require('./Extraction')
 const ProjectFileStructure = require('./ProjectFileStructure')
 const CodeBuilder = require('./CodeBuilder')
 const { convertSwagger } = require('./SwaggerBuilder')
@@ -97,6 +98,26 @@ module.exports = function (config) {
         if (config.domains[domain][action].endpoint) {
           const endpoint = cloneDeep(config.domains[domain][action].endpoint)
 
+          if (endpoint.extract) {
+            // todo: deprecate Extract
+            Object.keys(endpoint.extract).forEach(key => {
+              // switch it to use the json-path model instead
+              if (endpoint.extract[key] instanceof RequestExtraction) {
+                endpoint.extract[key] = `$.${endpoint.extract[key].data.from}.${endpoint.extract[key].data.item || key}`
+                console.warn(`The extract interface is deprecated, use: "${endpoint.extract[key]}" on field "${key}" under ${domain}/${action}`)
+              }
+
+              // if the key uses commas, spread it out
+              if (key.includes(',')) {
+                const value = endpoint.extract[key]
+                delete endpoint.extract[key]
+                key.split(',').forEach(key => {
+                  endpoint.extract[key] = `${value}.${key}`
+                })
+              }
+            })
+          }
+
           CodeBuilder.addOrUpdateFunction(extractionTree, action, {
             req: 'any',
             res: 'any',
@@ -137,17 +158,28 @@ module.exports = function (config) {
 
           if (endpoint.validate) {
             Object.keys(endpoint.validate).forEach(part => {
+              let skipRecommendation = false
+              if (endpoint.validate[part] === '!input') {
+                endpoint.validate[part] = config.domains[domain][action].input
+                skipRecommendation = true
+              }
+
+              if (endpoint.validate[part].$model) skipRecommendation = true
+
               const schema = traverse(endpoint.validate[part], replaceModels, toJson)
               if (schema.type) {
                 endpoint.validate[part] = toJson(schema)
               } else {
                 endpoint.validate[part] = Schema.object(schema).toJSON()
               }
+
+              if (!skipRecommendation && JSON.stringify(actionSchema) === JSON.stringify(endpoint.validate[part])) {
+                console.warn(`Redundancy detected, use {"${part}": "!input"} as a shorthand for the validation under ${domain}/${action}`)
+              }
             })
           }
 
           collection.addRequest(domain, action, endpoint, endpoints.route || '')
-
           endpoints[action] = endpoint
         }
 
@@ -167,7 +199,7 @@ module.exports = function (config) {
         })
       })
 
-      CodeBuilder.updateExports(tree, extractions)
+      CodeBuilder.updateExports(tree, actions)
       CodeBuilder.updateExports(extractionTree, extractions)
       CodeBuilder.updateExports(authorizationTree, authorizations)
       CodeBuilder.updateExports(afterTree, after)

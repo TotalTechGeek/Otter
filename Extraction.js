@@ -45,6 +45,7 @@ class RequestExtraction {
 class ExtractionSchema {
   constructor () {
     this.req = () => new RequestExtraction()
+    this.RequestExtraction = RequestExtraction
   }
 }
 

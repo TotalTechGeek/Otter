@@ -20,3 +20,5 @@ module.exports = {
   Builder,
   Events
 }
+
+Extract.req().body()

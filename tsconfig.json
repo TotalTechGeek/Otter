@@ -2,7 +2,8 @@
   "compilerOptions": {
     "outDir": "./out",
     "allowJs": true,
-    "target": "es5"
+    "target": "es2020",
+    "baseUrl": "./src"
   },
   "include": [
     "./src/**/*"

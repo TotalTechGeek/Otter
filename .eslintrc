@@ -1,9 +1,9 @@
 {
-    "extends": "standard",
-    "parserOptions": {
-        "ecmaVersion": 2020
-    },
-    "env": {
-        "es6": true
-    }
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "sourceType": "module"
+  },
+  "rules": {
+    "quotes": [ "error", "single" ]
+  }
 }

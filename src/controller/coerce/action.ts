@@ -7,7 +7,7 @@ export function action<
   TParamName extends string,
   TRoute extends RestRoute<string, TParamName>,
   TRequestExtractor extends RequestExtractor<TParamName, TExtracted>,
-  >(
+>(
   action: ActionHandler<TInput>
     & ActionExtractor<TParamName, TExtracted>
     & ActionRoute<TRoute>

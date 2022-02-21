@@ -1,4 +1,4 @@
-import {Action} from 'src/controller/Action';
+import {Action} from '.';
 
 export type Controller = {
   actions: Array<Action>

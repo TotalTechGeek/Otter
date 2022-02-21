@@ -1,6 +1,6 @@
 import {RequestExtractor} from 'src/extract';
-import {RestRoute} from './RestRoute';
 import {Awaitable} from 'src/types';
+import {RestRoute} from '.';
 
 export type Action =
   & ActionRoute<any>

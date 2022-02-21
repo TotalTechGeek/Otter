@@ -1,3 +1,3 @@
-export * from './Extract';
-export * from './SimpleExtraction';
-export * from './RequestExtractor';
+export * from './extract';
+export * from './simple-extractor';
+export * from './request-extractor';

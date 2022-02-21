@@ -1,9 +1,8 @@
-import {SimpleExtraction} from 'src/extract/SimpleExtraction';
-import {RequestExtractor} from 'src/extract/RequestExtractor';
+import {RequestExtractor, SimpleExtractor} from 'src/extract';
 import {IntersectUnion} from 'src/types';
 
 export function extract<
-  TExtractors extends SimpleExtraction<string, object>
+  TExtractors extends SimpleExtractor<string, object>
   >(providers: Array<TExtractors>):
   RequestExtractor<
     TExtractors['paramName'],

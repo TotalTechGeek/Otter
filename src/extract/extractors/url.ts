@@ -1,7 +1,7 @@
-import {SimpleExtraction} from 'src/extract/SimpleExtraction';
+import {SimpleExtractor} from 'src/extract/SimpleExtraction';
 
 export function url<TParamName extends string>(param: TParamName):
-  SimpleExtraction<TParamName, { [Key in TParamName]: string }> {
+  SimpleExtractor<TParamName, { [Key in TParamName]: string }> {
   throw 'todo';
 }
 

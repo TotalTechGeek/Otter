@@ -1,3 +1,3 @@
-export * from './IntersectUnion';
-export * from './HttpMethod';
-export * from './Awaitable';
+export * from './awaitable';
+export * from './http-method';
+export * from './intersect-union';

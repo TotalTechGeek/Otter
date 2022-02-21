@@ -1,5 +1,5 @@
-import {SimpleExtraction} from 'src/extract/SimpleExtraction';
+import {SimpleExtractor} from 'src/extract/SimpleExtraction';
 
-export function body<TExtract extends object>(): SimpleExtraction<never, TExtract> {
+export function body<TExtract extends object>(): SimpleExtractor<never, TExtract> {
   throw 'todo';
 }

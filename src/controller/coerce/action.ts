@@ -1,6 +1,5 @@
-import {RequestExtractor} from '../../extract';
-import {Action, ActionExtractor, ActionHandler, ActionRoute} from '../Action';
-import {RestRoute} from '../RestRoute';
+import {Action, ActionExtractor, ActionHandler, ActionRoute, RestRoute} from 'src/controller/types';
+import {RequestExtractor} from 'src/extract';
 
 export function action<
   TInput extends object,

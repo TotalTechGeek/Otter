@@ -1,5 +1,5 @@
 import {HttpMethod} from 'src/types';
-import {RestRoute} from 'src/controller/RestRoute';
+import {RestRoute} from 'src/controller/types';
 
 type RestRouteParams<TRoute extends string> = TRoute extends `${infer TMethod} /${infer TRest}`
   ? TMethod extends HttpMethod

@@ -1,4 +1,3 @@
-
 import {rest, extract, action, controller} from './coerce';
 import {Extract} from 'src/extract';
 

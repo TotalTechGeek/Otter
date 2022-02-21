@@ -4,7 +4,8 @@
     "allowJs": true,
     "target": "es2020",
     "baseUrl": "./",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "strictNullChecks": true
   },
   "include": [
     "./src/**/*"

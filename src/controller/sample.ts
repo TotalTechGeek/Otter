@@ -1,5 +1,6 @@
 import {rest, extract, action, controller} from './coerce';
 import {Extract} from 'src/extract';
+import {Schema} from '../schema';
 
 controller({
   actions: [
@@ -7,7 +8,10 @@ controller({
       route: rest('get /:id'),
       extract: extract([
         Extract.from.url('id'),
-        Extract.from.body<{ name: string, age: number }>(),
+        Extract.from.body({
+          name: Schema.string(),
+          age: Schema.number(),
+        } as const),
       ]),
       handler: function(input: { id: string, name: string, age: number }) {},
     }),
@@ -21,10 +25,12 @@ controller({
     action({
       route: rest('post /'),
       extract: extract([
-        Extract.from.body<{ name: string }>()
+        Extract.from.body({
+          name: Schema.string(),
+          age: Schema.number()
+        }),
       ]),
       handler: function(input: { name: string, age: number }) {}
     })
   ]
 })
-

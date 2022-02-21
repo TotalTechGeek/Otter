@@ -1,4 +1,4 @@
 export type SimpleExtractor<TParamName extends string, TExtract extends object> = {
-  paramName?: TParamName;
+  paramName: TParamName;
   apply: () => TExtract;
 }

@@ -1,23 +1,11 @@
-import {extract, Extract} from './Extract';
-import {route} from './Route';
-import {action, Action} from './Action';
 
-type Controller = {
-  actions: Array<Action>
-}
-
-function controller(controller: Controller): Controller {
-  throw 'TODO'
-}
-
-//
-// Example
-//
+import {rest, extract, action, controller} from './coerce';
+import {Extract} from 'src/extract';
 
 controller({
   actions: [
     action({
-      route: route('get /:id'),
+      route: rest('get /:id'),
       extract: extract([
         Extract.from.url('id'),
         Extract.from.body<{ name: string, age: number }>(),
@@ -25,14 +13,14 @@ controller({
       handler: function(input: { id: string, name: string, age: number }) {},
     }),
     action({
-      route: route('delete /:di'),
+      route: rest('delete /:di'),
       extract: extract([
         Extract.from.url('id'),
       ]),
       handler: function(input: { id: string }) {},
     }),
     action({
-      route: route('post /'),
+      route: rest('post /'),
       extract: extract([
         Extract.from.body<{ name: string }>()
       ]),

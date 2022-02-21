@@ -143,7 +143,7 @@ class Router {
       req[packageName] = req[packageName] || {}
       // req[packageName].data = {}
       req[packageName].action = route.name
-      req[packageName].route = route.route
+      req[packageName].rest = route.route
       req[packageName].start = process.hrtime()
 
       Events.emit('EndpointCalled', { req, res, action: req[packageName].action, route: req[packageName].route })

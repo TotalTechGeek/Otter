@@ -31,6 +31,16 @@ controller({
         }),
       ]),
       handler: function(input: { name: string, age: number }) {}
+    }),
+    action({
+      route: rest('post /'),
+      extract: extract([
+        Extract.from.body({
+          name: Schema.string(),
+          age: Schema.number({ optional: true })
+        }),
+      ]),
+      handler: function(input: { name: string, age: number }) {}
     })
   ]
 })

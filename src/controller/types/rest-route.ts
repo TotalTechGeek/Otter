@@ -1,6 +1,9 @@
+import {HttpMethod} from 'src/types';
+
 export type RestRoute<TRoute extends string, TRouteParams extends string> = {
   type: 'rest',
   pattern: TRoute;
-  params: Array<TRouteParams>;
+  method: HttpMethod;
+  path: string;
 }
 

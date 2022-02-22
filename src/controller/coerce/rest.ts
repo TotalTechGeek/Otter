@@ -15,5 +15,11 @@ type RestPathParams<TPathParams extends string, TPath extends string> = TPath ex
       : TPathParams;
 
 export function rest<TRoute extends string>(route: TRoute): RestRoute<TRoute, RestRouteParams<TRoute>> {
-  throw 'TODO';
+  const [method, path] = route.split(' ');
+  return {
+    type: 'rest',
+    pattern: route,
+    method,
+    path
+  };
 }

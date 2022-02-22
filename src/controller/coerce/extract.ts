@@ -8,5 +8,13 @@ export function extract<TExtractors extends SimpleExtractor<string, object>>(
     IntersectUnion<ReturnType<TExtractors['apply']>>
     >
 {
-  throw 'TODO';
+  return {
+    apply: () => {
+      return providers
+        .map(p => p.apply())
+        .reduce((acc, val) => {
+          return { ...acc, ...val };
+        }, {}) as any;
+    }
+  };
 }

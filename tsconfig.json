@@ -5,7 +5,10 @@
     "target": "es2020",
     "baseUrl": "./",
     "moduleResolution": "node",
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "paths": {
+      "otter": ["./src"]
+    }
   },
   "include": [
     "./src/**/*"

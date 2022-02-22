@@ -3,8 +3,8 @@ import {Awaitable} from 'src/types';
 import {RestRoute} from '.';
 
 export type Action =
-  & ActionRoute<any>
-  & ActionHandler<any>
+  & ActionRoute<RestRoute<string, string>>
+  & Partial<ActionHandler<any>>
   & ActionExtractor<any, any>;
 
 export type ActionRoute<TRoute extends RestRoute<string, string>> = {

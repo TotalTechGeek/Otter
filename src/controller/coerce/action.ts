@@ -15,7 +15,7 @@ export function action<TRoute extends RestRoute<string, never>>(
   action: ActionHandler<never>
     & ActionRoute<TRoute>
 ): Action;
-export function action(action: Action): Action {
+export function action(action: any): Action {
   return action;
 }
 

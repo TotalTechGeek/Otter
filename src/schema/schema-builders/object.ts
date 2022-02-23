@@ -50,7 +50,9 @@ function getRequired<T>(properties: ObjectProperties<T>): Array<string> {
 function extractSpecification<T>(properties: ObjectProperties<T>) {
   return Object
     .entries(properties)
-    .map(([key, value]: [string, any]) => value.specification)
+    .map(([key, value]: [string, OtterSchema<unknown>]) => {
+      return [key, value.specification] as [string, OtterSchema<unknown>['specification']]
+    })
     .reduce((acc, [key, value]) => {
       return { ...acc, [key]: value };
     }, {});

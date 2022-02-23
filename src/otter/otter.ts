@@ -5,14 +5,12 @@ type OtterOptions = {
   port: number
 }
 
-export async function otter(options: OtterOptions): Promise<void> {
+export function otter(options: OtterOptions) {
   const app = express();
   app.use(json());
 
-  return new Promise((resolve, reject) => {
-    app.listen(options.port, () => {
-      resolve();
-    });
+  app.listen(options.port, () => {
+    console.log(`[otter] Initialized and listening on port ${options.port}`)
   });
 }
 

@@ -16,6 +16,10 @@ type RestPathParams<TPathParams extends string, TPath extends string> = TPath ex
 
 export function rest<TRoute extends string>(route: TRoute): RestRoute<TRoute, RestRouteParams<TRoute>> {
   const [method, path] = route.split(' ');
+  if (!HttpMethod.includes(method)) {
+    throw new Error(`Illegal HttpMethod: ${method}`);
+  }
+
   return {
     type: 'rest',
     pattern: route,

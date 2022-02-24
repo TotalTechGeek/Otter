@@ -10,16 +10,18 @@ export function attachRestAction({action, app, prefix}: AttachActionParams) {
   app[method](route, handler);
 
   function handler(req: Request, res: Response) {
-    const input = action.extract?.apply({ req, res });
     try {
+      const input = action.extract?.apply({req});
       const output = action.handler(input);
       res.send(JSON.stringify(output));
     } catch (e) {
-      if (e.code) {
-        res.sendStatus(e.code);
-      }
+      const status = e.code ?? 500;
 
-      res.send(e.toString());
+      res.status(status).send({
+        status,
+        message: e instanceof Error ? e.message : 'Internal Server Error',
+        error: e
+      });
     }
   }
 }

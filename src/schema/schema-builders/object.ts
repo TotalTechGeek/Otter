@@ -23,7 +23,7 @@ export function object<TType, TOptional extends boolean = false>(
     required,
 
     // default properties
-    allowAdditional: false,
+    additionalProperties: false,
 
     ...options,
   })

@@ -1,4 +1,3 @@
-import { Request, Response } from 'express';
 import {ExtractionContext} from './extraction-context';
 
 export type SimpleExtractor<TParamName extends string, TExtract extends object> = {

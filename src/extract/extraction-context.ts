@@ -1,6 +1,5 @@
-import {Request, Response} from 'express';
+import {Request} from 'express';
 
 export type ExtractionContext = {
   req: Request,
-  res: Response,
 }

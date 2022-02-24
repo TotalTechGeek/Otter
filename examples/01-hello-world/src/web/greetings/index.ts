@@ -1,4 +1,4 @@
-import {action, controller, extract, Extract, rest} from 'otter';
+import {action, controller, extract, Extract, rest, Schema} from 'otter';
 import {greet} from './greet';
 import {greetByName} from './greet-by-name';
 
@@ -15,5 +15,14 @@ export default controller({
       ]),
       handler: greetByName
     }),
+    action({
+      route: rest('post /'),
+      extract: extract([
+        Extract.from.body({
+          name: Schema.string()
+        })
+      ]),
+      handler: greetByName
+    })
   ]
 });

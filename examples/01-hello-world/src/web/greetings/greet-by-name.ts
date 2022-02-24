@@ -1,7 +1,5 @@
-type GreetByNameParams = {
-  name: string
-}
+import {GreetingModel} from './greeting-model';
 
-export function greetByName(input: GreetByNameParams) {
+export function greetByName(input: GreetingModel) {
   return `Hello, ${input.name}!`;
 }

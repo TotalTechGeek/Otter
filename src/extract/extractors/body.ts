@@ -2,22 +2,24 @@ import {SimpleExtractor} from 'src/extract';
 import {Schema} from 'src/schema';
 import {ObjectProperties} from 'src/schema/schema-builders';
 
-import Ajv, {ValidateFunction} from 'ajv';
+import Ajv from 'ajv';
+import {HttpError} from 'otter';
 const ajv = new Ajv();
 
 export function body<
   T extends object,
 >(schema: ObjectProperties<T>): SimpleExtractor<never, T> {
-  let validator: ValidateFunction | undefined;
+  const isValid = ajv.compile(Schema.object(schema).specification);
 
   return {
-    apply: () => {
-      if (!validator) {
-        validator = ajv.compile(Schema.object(schema).specification);
+    // @ts-ignore
+    paramName: undefined,
+    apply: (ctx) => {
+      if (!isValid(ctx.req.body)) {
+        throw new HttpError('Request Failed Validation', 400, isValid.errors)
       }
 
-      // TODO validate body
-      return null as any;
+      return ctx.req.body as any;
     }
-  } as any;
+  };
 }

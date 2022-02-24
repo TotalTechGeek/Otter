@@ -4,7 +4,7 @@ import {RestRoute} from '.';
 
 export type Action =
   & ActionRoute<RestRoute<string, string>>
-  & Partial<ActionHandler<any>>
+  & ActionHandler<any>
   & ActionExtractor<any, any>;
 
 export type ActionRoute<TRoute extends RestRoute<string, string>> = {

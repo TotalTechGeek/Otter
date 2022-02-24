@@ -9,9 +9,9 @@ export function extract<TExtractors extends SimpleExtractor<string, object>>(
     >
 {
   return {
-    apply: () => {
+    apply: (ctx) => {
       return providers
-        .map(p => p.apply())
+        .map(p => p.apply(ctx))
         .reduce((acc, val) => {
           return { ...acc, ...val };
         }, {}) as any;

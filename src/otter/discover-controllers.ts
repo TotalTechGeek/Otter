@@ -19,7 +19,7 @@ function load(info: DiscoveredController, app: Express) {
     return;
   }
 
-  console.log(`Registering controller with prefix: ${info.prefix}`)
+  console.log(`Registering controller with prefix: ${info.prefix}/`)
   controller.register(app, info.prefix);
 }
 

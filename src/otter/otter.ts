@@ -1,16 +1,29 @@
 import * as express from 'express';
-import { json } from 'body-parser'
+import {json} from 'body-parser'
+import {discoverControllers} from './discover-controllers';
 
 type OtterOptions = {
   port: number
 }
 
-export function otter(options: OtterOptions) {
+async function initialize(options: OtterOptions): Promise<void> {
   const app = express();
   app.use(json());
 
-  app.listen(options.port, () => {
-    console.log(`[otter] Initialized and listening on port ${options.port}`)
+  await discoverControllers(app);
+
+  return new Promise((resolve, reject) => {
+    app.listen(options.port, resolve);
   });
+}
+
+export function otter(options: OtterOptions) {
+  initialize(options)
+    .then(() => {
+      console.log(`[otter] Initialized and listening on port ${options.port}`)
+    })
+    .catch(e => {
+      throw e
+    });
 }
 

@@ -4,7 +4,8 @@
   "description": "Microservice Code Generator",
   "main": "index.js",
   "scripts": {
-    "example:01": "cd examples/01-hello-world && ts-node --project ../tsconfig.json -r tsconfig-paths/register src/index.ts"
+    "example:01": "cd examples/01-hello-world && ts-node --project ../tsconfig.json -r tsconfig-paths/register src/index.ts",
+    "example:02": "cd examples/02-basic-authentication && ts-node --project ../tsconfig.json -r tsconfig-paths/register src/index.ts"
   },
   "keywords": [
     "code",

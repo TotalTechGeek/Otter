@@ -3,7 +3,7 @@
   "compilerOptions": {
     "paths": {
       "otter": ["./src"],
-      "otter/http": ["./src/http"]
+      "otter/*": ["./src/*"]
     }
   }
 }

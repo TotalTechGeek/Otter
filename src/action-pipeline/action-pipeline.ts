@@ -23,13 +23,13 @@ export class ActionPipeline<
   async run(input: TInput): Promise<TOutput> {
     let intermediate: any = input;
     for (const before of this.beforeActions) {
-      intermediate = await before(input);
+      intermediate = await before(intermediate);
     }
 
     intermediate = await this.handler(intermediate);
 
     for (const after of this.afterActions) {
-      intermediate = await after(input);
+      intermediate = await after(intermediate);
     }
     return intermediate;
   }

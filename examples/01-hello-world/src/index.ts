@@ -1,5 +1,7 @@
 import {otter} from 'otter';
 
 otter({
-  port: 8080,
+  http: {
+    port: 8080
+  },
 });

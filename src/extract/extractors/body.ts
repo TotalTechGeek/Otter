@@ -3,7 +3,7 @@ import {Schema} from 'src/schema';
 import {ObjectProperties} from 'src/schema/schema-builders';
 
 import Ajv from 'ajv';
-import {HttpError} from 'otter';
+import {HttpError} from 'src/http';
 
 const ajv = new Ajv();
 

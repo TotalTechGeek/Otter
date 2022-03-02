@@ -1,5 +1,4 @@
-import {extract, Extract, Schema} from 'otter';
-import {action, controller, route} from 'otter/http';
+import {action, controller, route, extract, Extract, Schema} from 'otter/http';
 import {greet} from './greet';
 import {greetByName} from './greet-by-name';
 

@@ -1,9 +1,9 @@
 import {readdir} from 'fs/promises'
-import {WebController} from 'src/controller';
+import {HttpController} from 'src/http';
 import {Express} from 'express';
 
-export async function discoverControllers(app: Express) {
-  const controllers = await search('', `${process.cwd()}/src/web`);
+export async function discoverHttpControllers(app: Express) {
+  const controllers = await search('', `${process.cwd()}/src/http`);
   controllers.forEach(c => load(c, app));
 }
 
@@ -14,8 +14,8 @@ type DiscoveredController = {
 
 function load(info: DiscoveredController, app: Express) {
   const { default: controller } = require(info.path);
-  if (!(controller instanceof WebController)) {
-    console.log(`Illegal export of an index file in web: ${info.path}`);
+  if (!(controller instanceof HttpController)) {
+    console.log(`Illegal export of an index file in http: ${info.path}`);
     return;
   }
 
@@ -48,4 +48,3 @@ async function search(prefix: string, directory: string): Promise<Array<Discover
 
   return controllers;
 }
-

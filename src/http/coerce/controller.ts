@@ -1,8 +1,8 @@
-import {HttpBindingInfo, HttpController} from 'src/http';
-import {ActionPipeline, HttpInput} from '../../action-pipeline';
+import {ActionPipeline} from 'src/action-pipeline';
+import {HttpBindingInfo, HttpController, HttpPipelineInput} from 'src/http';
 
 export type Controller = {
-  actions: Array<ActionPipeline<HttpInput, any, HttpBindingInfo>>
+  actions: Array<ActionPipeline<HttpPipelineInput, any, HttpBindingInfo>>
 }
 
 export function controller(controller: Controller): HttpController {

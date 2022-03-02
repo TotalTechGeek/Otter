@@ -1,7 +1,9 @@
+import {ActionPipeline} from 'src/action-pipeline';
+import * as e from 'express';
+
 import {Controller} from './coerce';
 import {HttpBindingInfo} from './http-binding-info';
-import {ActionPipeline, HttpInput} from 'src/action-pipeline';
-import * as e from 'express';
+import {HttpPipelineInput} from './http-pipeline-input';
 
 export class HttpController {
   constructor(private readonly definition: Controller) {
@@ -10,7 +12,7 @@ export class HttpController {
   register(app: e.Express, prefix: string) {
     this.definition.actions.forEach(bindAction);
 
-    function bindAction(action: ActionPipeline<HttpInput, any, HttpBindingInfo>) {
+    function bindAction(action: ActionPipeline<HttpPipelineInput, any, HttpBindingInfo>) {
       if (action.bindingInfo.type !== 'http') return;
 
       const {path, method} = action.bindingInfo.route;

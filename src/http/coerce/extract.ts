@@ -1,9 +1,9 @@
-import {RequestExtractor, SimpleExtractor} from 'src/extract';
 import {IntersectUnion} from 'src/types';
+import {HttpExtractor, HttpPartialExtractor} from 'src/http/extract';
 
-export function extract<TExtractors extends SimpleExtractor<object>>(
+export function extract<TExtractors extends HttpPartialExtractor>(
   ...providers: Array<TExtractors>
-): RequestExtractor<IntersectUnion<ReturnType<TExtractors>>> {
+): HttpExtractor<IntersectUnion<ReturnType<TExtractors>>> {
   return (ctx) => {
     return providers
       .map(p => p(ctx))

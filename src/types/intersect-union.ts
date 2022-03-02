@@ -1,4 +1,4 @@
-import {RequestExtractor} from '../extract';
+import {Extractor} from '../extract';
 
 /**
  * Converts a union `(a | b | c)` to an intersection of the same

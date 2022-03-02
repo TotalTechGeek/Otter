@@ -1,8 +1,8 @@
 export * from 'src/schema';
-export * from 'src/extract';
-export * from './coerce';
-export * from './http-error';
 
 export * from './coerce';
-export * from './http-controller';
+export * from './extract';
 export * from './http-binding-info';
+export * from './http-pipeline-input';
+export * from './http-controller';
+export * from './http-error';

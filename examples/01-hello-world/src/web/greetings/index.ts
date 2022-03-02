@@ -10,19 +10,22 @@ export default controller({
     }),
     action({
       route: rest('get /:name'),
-      extract: extract(
-        Extract.from.url('name'),
-      ),
       handler: greetByName
-    }),
+    }).before(
+      extract(
+        Extract.from.url('name')
+      )
+    ),
     action({
       route: rest('post /'),
-      extract: extract(
+      handler: greetByName
+    }).before(
+      extract(
         Extract.from.body({
           name: Schema.string()
         })
-      ),
-      handler: greetByName
-    })
+      )
+    )
   ]
 });
+

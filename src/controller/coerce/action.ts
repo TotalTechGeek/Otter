@@ -1,21 +1,12 @@
-import {Action, ActionExtractor, ActionHandler, ActionRoute, RestRoute} from 'src/controller/types';
-import {RequestExtractor} from 'src/extract';
+import {Action, HttpBindingInfo, RestRoute} from 'src/controller/types';
+import {ActionPipeline} from 'src/action-pipeline';
 
-export function action<TInput extends object,
-  TExtracted extends TInput,
-  TParamName extends string,
-  TRoute extends RestRoute<string, TParamName>,
-  TRequestExtractor extends RequestExtractor<TParamName, TExtracted>,
-  >(
-  action: ActionHandler<TInput>
-    & ActionExtractor<TParamName, TExtracted>
-    & ActionRoute<TRoute>
-): Action
-export function action<TRoute extends RestRoute<string, never>>(
-  action: ActionHandler<never>
-    & ActionRoute<TRoute>
-): Action;
-export function action(action: any): Action {
-  return action;
+export function action<TInput extends object, TOutput>(
+  {route, handler}: Action<TInput, TOutput, RestRoute<string, string>>,
+): ActionPipeline<TInput, TOutput, HttpBindingInfo> {
+  return new ActionPipeline(
+    handler,
+    { type: 'http', route }
+  );
 }
 

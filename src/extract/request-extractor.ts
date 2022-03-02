@@ -1,6 +1,3 @@
-import {ExtractionContext} from './extraction-context';
+import {HttpInput, Op} from '../action-pipeline';
 
-export type RequestExtractor<TParamName extends string, TOutput> = {
-  paramName?: TParamName,
-  apply: (ctx: ExtractionContext) => TOutput
-}
+export type RequestExtractor<TOutput> = Op<HttpInput, TOutput>

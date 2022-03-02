@@ -1,15 +1,16 @@
-import {action, controller, extract, Extract, rest, Schema} from 'otter';
+import {extract, Extract, Schema} from 'otter';
+import {action, controller, route} from 'otter/http';
 import {greet} from './greet';
 import {greetByName} from './greet-by-name';
 
 export default controller({
   actions: [
     action({
-      route: rest('get /'),
+      route: route('get /'),
       handler: greet
     }),
     action({
-      route: rest('get /:name'),
+      route: route('get /:name'),
       handler: greetByName
     }).before(
       extract(
@@ -17,7 +18,7 @@ export default controller({
       )
     ),
     action({
-      route: rest('post /'),
+      route: route('post /'),
       handler: greetByName
     }).before(
       extract(

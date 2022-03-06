@@ -1,10 +1,19 @@
-import {HttpPartialExtractor} from 'src/http/extract/http-partial-extractor';
+import {PartialExtractor} from 'src/extract';
+import {HttpPipelineInput} from 'src/http';
 
-export function url<T extends string>(param: T): HttpPartialExtractor<Record<T, string>> {
+export function url<
+  TInput extends HttpPipelineInput,
+  TParam extends string
+>(param: TParam): PartialExtractor<
+  TInput,
+  { [K in TParam]: string }
+> {
   return (ctx) => {
     return {
       [param]: ctx.req.params[param]
-    } as Record<T, string>;
+    } as {
+      [K in TParam]: string
+    };
   };
 }
 

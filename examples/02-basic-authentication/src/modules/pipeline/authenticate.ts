@@ -1,12 +1,12 @@
 import {HttpError, HttpPipelineInput} from 'otter/http';
 
-export type Authenticated<T extends HttpPipelineInput> = T & {
+export type Authentication = {
   authenticated: {
     name: string;
   }
 }
 
-export function authenticate<T extends HttpPipelineInput>(input: T): Authenticated<T> {
+export function authenticate<T extends HttpPipelineInput>(input: T): T & Authentication {
   const base64 = input.req.header('authorization');
   if (!base64) {
     throw new HttpError('Authentication failed', 401);

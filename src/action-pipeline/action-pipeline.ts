@@ -7,13 +7,14 @@ export class ActionPipeline<
   TOutput,
   TBindingInfo,
 > {
-  private readonly beforeActions = new Array<Op<any, any>>();
-  private readonly afterActions = new Array<Op<any, any>>();
+  private readonly actions = new Array<Op<any, any>>();
 
   constructor(
-    private readonly handler: (input: TInput) => Awaitable<TOutput>,
+    handler: (input: TInput) => Awaitable<TOutput>,
     public readonly bindingInfo: TBindingInfo,
-  ) {}
+  ) {
+    this.actions.push(handler);
+  }
 
   /**
    * Asynchronously runs the pipeline on the provided `input`.
@@ -22,14 +23,8 @@ export class ActionPipeline<
    */
   async run(input: TInput): Promise<TOutput> {
     let intermediate: any = input;
-    for (const before of this.beforeActions) {
-      intermediate = await before(intermediate);
-    }
-
-    intermediate = await this.handler(intermediate);
-
-    for (const after of this.afterActions) {
-      intermediate = await after(intermediate);
+    for (const action of this.actions) {
+      intermediate = await action(intermediate);
     }
     return intermediate;
   }
@@ -66,7 +61,7 @@ export class ActionPipeline<
     op4: Op<T3, T5>,
   ): ActionPipeline<T0, TOutput, TBindingInfo>;
   before(...beforeActions: Array<Op<any, any>>): ActionPipeline<unknown, unknown, TBindingInfo> {
-    this.beforeActions.push(...beforeActions);
+    this.actions.unshift(...beforeActions);
     return this;
   }
 
@@ -96,7 +91,7 @@ export class ActionPipeline<
     op4: Op<T3, T5>,
   ): ActionPipeline<TInput, T5, TBindingInfo>;
   after(...afterActions: Array<Op<any, any>>): ActionPipeline<unknown, unknown, TBindingInfo> {
-    this.afterActions.push(...afterActions);
+    this.actions.push(...afterActions);
     return this;
   }
 }

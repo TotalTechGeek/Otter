@@ -7,7 +7,8 @@ export default controller({
     action({
       route: route('get /'),
       handler: greet
-    }),
+    }).build(),
+
     action({
       route: route('get /:name'),
       handler: greetByName
@@ -15,7 +16,8 @@ export default controller({
       extract(
         Extract.from.url('name')
       )
-    ),
+    ).build(),
+
     action({
       route: route('post /'),
       handler: greetByName
@@ -25,7 +27,7 @@ export default controller({
           name: Schema.string()
         })
       )
-    )
+    ).build()
   ]
 });
 

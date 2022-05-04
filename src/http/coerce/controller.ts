@@ -1,7 +1,7 @@
-import {HttpController, HttpPipelineInput} from 'src/http';
-import {Awaitable} from 'src/types';
+import {HttpBindingInfo, HttpController, HttpPipelineInput} from 'src/http';
+import {InvokableActionPipeline} from 'src/action-pipeline';
 
-type Action = (input: HttpPipelineInput) => Awaitable;
+type Action = InvokableActionPipeline<HttpPipelineInput, any, HttpBindingInfo>;
 
 export type Controller = {
   actions: Array<Action>;

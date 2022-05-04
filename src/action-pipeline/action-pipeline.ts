@@ -1,5 +1,9 @@
 import {Awaitable, Op} from 'src/types';
 
+export type InvokableActionPipeline<TInput, TOutput, TBindingInfo> =
+  & ((input: TInput) => Awaitable<TOutput>)
+  & { bindingInfo: TBindingInfo };
+
 export class ActionPipeline<
   TInput,
   TOutput,
@@ -9,7 +13,7 @@ export class ActionPipeline<
 
   constructor(
     handler: (input: TInput) => Awaitable<TOutput>,
-    public readonly bindingInfo: TBindingInfo,
+    private readonly bindingInfo: TBindingInfo,
   ) {
     this.actions.push(handler);
   }
@@ -17,14 +21,16 @@ export class ActionPipeline<
   /**
    * Builds an asynchronous pipeline to handle incoming requests
    */
-  build() {
-    return async(input: TInput): Promise<TOutput> => {
+  build(): InvokableActionPipeline<TInput, TOutput, TBindingInfo> {
+    const pipeline = async(input: TInput): Promise<TOutput> => {
       let intermediate: any = input;
       for (const action of this.actions) {
         intermediate = await action(intermediate);
       }
       return intermediate;
-    }
+    };
+    pipeline.bindingInfo = this.bindingInfo;
+    return pipeline;
   }
 
   //

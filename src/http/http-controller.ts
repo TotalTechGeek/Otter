@@ -1,4 +1,4 @@
-import {ActionPipeline} from 'src/action-pipeline';
+import {ActionPipeline, InvokableActionPipeline} from 'src/action-pipeline';
 import * as e from 'express';
 
 import {Controller} from './coerce';
@@ -10,9 +10,9 @@ export class HttpController {
   }
 
   register(app: e.Express, prefix: string) {
-    this.definition.actions.forEach(bindAction);
+    this.definition.actions.forEach(action => bind(action));
 
-    function bindAction(action: ActionPipeline<HttpPipelineInput, any, HttpBindingInfo>) {
+    function bind(action: InvokableActionPipeline<HttpPipelineInput, any, HttpBindingInfo>) {
       if (action.bindingInfo.type !== 'http') return;
 
       const {path, method} = action.bindingInfo.route;
@@ -20,13 +20,13 @@ export class HttpController {
       console.log(`Registering ${method} ${route}`)
       app[method](route, async (req: e.Request, res: e.Response) => {
         try {
-          const output = await action.run({ req });
+          const output = await action({ req });
           res.send(JSON.stringify(output));
         } catch (e) {
           console.error(`[${method} ${route}] Unhandled exception:`);
           console.error(e);
 
-          const status = e.code ?? 500;
+          const status = (e as any).code ?? 500;
           res.status(status).send({
             status,
             message: e instanceof Error ? e.message : 'Internal Server Error',

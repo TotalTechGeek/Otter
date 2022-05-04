@@ -32,8 +32,10 @@ export function object<TType, TOptional extends boolean = false>(
 function getRequired<T>(properties: ObjectProperties<T>): Array<string> {
   function reducer(
     required: Array<string>,
-    [propName, propSchema]: [string, OtterSchema<unknown>]
+    entry: [string, unknown],
   ): Array<string> {
+    const [propName, propSchema] = entry as [string, OtterSchema<unknown>];
+
     if (!propSchema.optional) {
       required.push(propName);
     }
@@ -50,8 +52,14 @@ function getRequired<T>(properties: ObjectProperties<T>): Array<string> {
 function extractSpecification<T>(properties: ObjectProperties<T>) {
   return Object
     .entries(properties)
-    .map(([key, value]: [string, OtterSchema<unknown>]) => {
-      return [key, value.specification] as [string, OtterSchema<unknown>['specification']]
+    .map(([key, value]) => {
+      return [
+        key,
+        (value as OtterSchema<unknown>).specification
+      ] as [
+        string,
+        OtterSchema<unknown>['specification']
+      ]
     })
     .reduce((acc, [key, value]) => {
       return { ...acc, [key]: value };

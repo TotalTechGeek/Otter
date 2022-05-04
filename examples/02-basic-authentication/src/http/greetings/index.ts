@@ -7,11 +7,6 @@ import {authenticate} from '../../modules/pipeline';
 export default controller({
   actions: [
     action({
-      route: route('get /ping'),
-      handler: () => 'pong',
-    }).build(),
-
-    action({
       route: route('get /'),
       handler: greetByName
     }).before(
